@@ -4,6 +4,11 @@
 
 # LIA
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20light.png">
+</picture>
+
 **LIA** is an open-source low-power pet and asset tracker built on top of Meshtastic and LoRa mesh networking.
 
 The project focuses on creating a compact, long-range, subscription-free tracking device capable of operating in off-grid environments using decentralized mesh communication.
