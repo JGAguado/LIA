@@ -4,10 +4,14 @@
 
 # LIA
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20light.png">
-</picture>
+
+<p align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/JGAguado/LIA/main/Style/Primary%20light.png">
+      <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="https://user-images.githubusercontent.com/25423296/163456779-a8556205-d0a5-45e2-ac17-42d089e3c3f8.png">
+    </picture>
+</p>
 
 **LIA** is an open-source low-power pet and asset tracker built on top of Meshtastic and LoRa mesh networking.
 
