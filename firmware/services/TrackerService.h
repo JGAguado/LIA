@@ -4,14 +4,14 @@
 #include "SinglePortModule.h"
 #include "concurrency/OSThread.h"
 
-/// Owns periodic mesh transmissions for LIA. Formalizes Phase 2's ad-hoc
+/// Owns periodic mesh transmissions for LIA. Formalized Phase 2's ad-hoc
 /// "LIA Radio Test" sender (which lived inline in
-/// extra_variants/lia_v1/variant.cpp) into a proper service, per
+/// extra_variants/lia_v1/variant.cpp) into a proper service in Phase 3.5;
+/// Phase 5 replaced the fixed text payload with the current GPS position
+/// (meshtastic_Position, same as stock PositionModule sends), per
 /// firmware/AGENTS.md's architecture.
 ///
-/// Currently still just the fixed test payload -- GPS transmission
-/// scheduling (Phase 5) and the tracker/beacon state machine (Phase 6) are
-/// not implemented yet.
+/// The tracker/beacon state machine (Phase 6) is not implemented yet.
 ///
 /// Construct once from lateInitVariant() (after the radio is initialized):
 /// `new TrackerService();`. Nothing needs to reference the instance

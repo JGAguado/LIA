@@ -10,11 +10,11 @@ hand.
 | --- | --- | --- |
 | 0 -- Board Bring-up | Done, flashed and confirmed booting on real hardware (COM4) | Done (agent-verified via serial log; see below) |
 | 1 -- PPC Validation | Done -- indirectly confirmed: GPS and radio both respond over their buses, which requires PPC/power to be up (see below) | Multimeter check still pending, but functionally demonstrated |
-| 2 -- SX1262 Integration | Done, verified end-to-end on real hardware (see below) | Region/app-pairing still pending (agent can set region via CLI if asked -- regulatory, so not done unprompted) |
-| 3 -- Radio Validation | N/A (physical range/sleep-wake test only) | Pending |
+| 2 -- SX1262 Integration | Done, verified end-to-end on real hardware (see below) | Done -- user paired via the official app, set the region, and confirmed receiving "LIA Radio Test" on the destination node |
+| 3 -- Radio Validation | N/A (physical range/sleep-wake test only) | Stable RF communication confirmed (real TX + real RX with rxSNR=6/rxRSSI=-49 from a 39-node mesh, see Phase 5 notes); range/sleep-wake walk test still pending |
 | 3.5 -- TrackerService | Done, confirmed sending every 30s on real hardware (see below) | N/A |
-| 4 -- SAM-M10Q Integration | Not started | Pending |
-| 5 -- GPS + Meshtastic | Not started | Pending |
+| 4 -- SAM-M10Q Integration | Done -- nothing to build, stock Meshtastic auto-detects the module (`GNSS_MODEL_UBLOX10`) and handles NMEA/UBX via the Phase 0 pin config | Cold/warm fix timing and PPC power-cycling still need outdoor testing |
+| 5 -- GPS + Meshtastic | Done, `TrackerService` now sends real `meshtastic_Position` packets (see below) | GPS icon / actual position receipt still pending an outdoor fix |
 | 6 -- Tracker Behaviour | Not started (blocked on BMS polarity -- see `board/README.md#open-questions`) | Pending |
 | 7 -- Charging Behaviour | Not started | Pending |
 | 8 -- Deep Sleep | Not started | Pending |
@@ -90,6 +90,11 @@ hand.
   traffic, then "GNSS module configuration saved!") -- since GPS is on the
   PPC-gated rail alongside the SX1262, this is de facto evidence PPC control
   is working, ahead of an actual multimeter check.
+- **User confirmed real end-to-end delivery**: paired with the official
+  Meshtastic app, set the region, and received "LIA Radio Test" on the
+  destination node (MAC `E7:25:DC:E6:D6:63`). This is genuine, independent
+  confirmation from the receiving side of the link, not just our own serial
+  log.
 
 ## Phase 3.5 notes
 
@@ -114,3 +119,41 @@ hand.
   RadioLib. Not a crash and didn't block the send, but worth watching once a
   region is set and real RF is active -- possibly related to the Wio-SX1262
   TCXO timing assumption already flagged in `variant.h` for Phase 2.
+
+## Phase 4 notes
+
+No new code. `src/gps/GPS.cpp` already auto-probes and identifies the
+SAM-M10Q as `GNSS_MODEL_UBLOX10`, then runs stock NMEA/UBX handling -- all
+switched on purely by the `GPS_RX_PIN`/`GPS_TX_PIN`/`HAS_GPS` defines already
+in `variant.h` since Phase 0. The "powersave" NAK observed in earlier
+captures is a benign quirk in that stock code path (not ours to patch, per
+"never edit Meshtastic core").
+
+## Phase 5 notes
+
+- `TrackerService`'s constructor now uses `meshtastic_PortNum_POSITION_APP`
+  instead of `TEXT_MESSAGE_APP`. `runOnce()` builds a `meshtastic_Position`
+  from the global `localPosition` (`NodeDB.h`, kept current by the GPS
+  subsystem) and `pb_encode_to_bytes`s it into the packet payload, matching
+  stock `PositionModule.cpp`'s own pattern exactly. Skips the send (logging
+  `TrackerService: no GPS fix yet, skipping send`) when latitude/longitude
+  are both still zero -- the same guard stock Meshtastic uses, since a (0,0)
+  position is meaningless.
+- **Confirmed working on real hardware**, and this capture was the first to
+  show real RF activity end to end, not just gated attempts:
+  ```
+  [RadioIf] Started Tx (...)
+  [RadioIf] Packet TX: 1009ms
+  [RadioIf] Completed sending (...)
+  [RadioIf] Lora RX (... rxSNR=6 rxRSSI=-49 ...)
+  [Router] Rx someone rebroadcasting for us (...)
+  [DeviceTelemetry] Node status update: 39 online, 39 total
+  [Tracker] TrackerService: no GPS fix yet, skipping send
+  ```
+  The region is clearly set now (no more "Region unset" warnings anywhere in
+  the capture) and the board is hearing a real 39-node mesh with a strong
+  received signal -- this is a substantial, real confirmation of Phase 3
+  ("stable RF communication"), not just Phase 5. `TrackerService` correctly
+  skipped sending a position (no GPS fix indoors) instead of sending a
+  meaningless (0,0) -- exactly the intended behavior; not yet verified with
+  an actual fix, which needs open sky.
