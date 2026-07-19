@@ -1,6 +1,7 @@
 #include "LiaBoard.h"
 
 #include "configuration.h"
+#include "sleep.h"
 
 namespace
 {
@@ -20,6 +21,8 @@ void LiaBoard::begin()
     if (began_)
         return;
     began_ = true;
+
+    deepSleepObserver_.observe(&notifyDeepSleep);
 
     pinMode(LIA_PIN_PPC, OUTPUT);
     disablePeripherals();
@@ -73,4 +76,14 @@ bool LiaBoard::isChargeComplete() const
 bool LiaBoard::isBmsHigh() const
 {
     return digitalRead(LIA_PIN_BMS) == HIGH;
+}
+
+int LiaBoard::onDeepSleep(void *)
+{
+    // Cuts power to both the SX1262 and SAM-M10Q together (shared PPC rail --
+    // this board has no way to sleep one without the other). Meshtastic only
+    // fires notifyDeepSleep when shouldLoraWake() is false, which is only
+    // true for ROUTER roles, so this always runs for LIA's TRACKER role.
+    disablePeripherals();
+    return 0;
 }

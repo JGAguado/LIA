@@ -16,7 +16,7 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 | `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Common-anode PWM, 0 = off / 255 = full brightness. |
 | `isCharging()` | `LIA_PIN_CHG` (GPIO1) | TP4056 `CHRG`, open-drain active-low. |
 | `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | TP4056 `STBY`, open-drain active-low. |
-| `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Raw mode-switch reading -- see [Open questions](#open-questions). |
+| `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). |
 
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
 stock Meshtastic, driven by the pin `#define`s in
@@ -38,19 +38,24 @@ global, per the "No globals" coding standard. It's driven from
   Meshtastic checkout: `lateInitVariant()` runs *after* the LoRa radio is
   initialized).
 - Deep-sleep power-down (`disablePeripherals()`) is wired to Meshtastic's
-  `notifyDeepSleep` observable starting Phase 6/8, once there's an actual
-  sleep policy to hook it to.
+  `notifyDeepSleep` observable (Phase 6), registered once in `begin()`. This
+  fires for any deep sleep path system-wide, not just `TrackerService`'s own
+  `doDeepSleep()` calls -- confirmed this actually runs for LIA: Meshtastic
+  only *skips* calling `notifyDeepSleep` when `shouldLoraWake()` is true,
+  which is only the case for `ROUTER`/`ROUTER_LATE` roles (`sleep.cpp`), not
+  `TRACKER`.
 
 ## Open questions
 
-- **BMS polarity.** `firmware/AGENTS.md` (Phase 6) specifies BMS HIGH as the
-  continuous/no-sleep/LED-on behaviour and BMS LOW as the wake-every-minute
-  sleep behaviour. The original project brief (`MOD.md`) names these the
-  other way around ("BMS high = Tracker mode" = the sleepy behaviour). Rather
-  than guess, `LiaBoard` only exposes the raw `isBmsHigh()` reading -- confirm
-  which switch position the user expects for which behaviour before wiring
-  Phase 6's tracker/beacon state machine to it.
+- ~~**BMS polarity.**~~ Resolved 2026-07-19: follow `firmware/AGENTS.md`
+  (Phase 6) as the authoritative source -- BMS HIGH is continuous/no-sleep,
+  BMS LOW is the wake-every-minute sleep cycle. `MOD.md`'s opposite polarity
+  ("BMS high = Tracker mode" = the sleepy behaviour) is not used.
 - **Charger status polarity.** `isCharging()`/`isChargeComplete()` assume the
   TP4056's `CHRG`/`STBY` are open-drain active-low (per its datasheet), read
   with the ESP32's internal pull-ups enabled. Confirm against real hardware
   in Phase 7.
+- **GPS fix-wait timeout for the BMS-low sleep cycle** (`TrackerService.h`'s
+  `kFixWaitTimeoutMs`, currently 90s) is a real tradeoff (battery vs. fresh
+  position) not yet validated against actual cold/warm-fix timing outdoors --
+  see the website's power-management.md "GPS fix timeout" note.

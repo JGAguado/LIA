@@ -15,9 +15,9 @@ hand.
 | 3.5 -- TrackerService | Done, confirmed sending every 30s on real hardware (see below) | N/A |
 | 4 -- SAM-M10Q Integration | Done -- nothing to build, stock Meshtastic auto-detects the module (`GNSS_MODEL_UBLOX10`) and handles NMEA/UBX via the Phase 0 pin config | Cold/warm fix timing and PPC power-cycling still need outdoor testing |
 | 5 -- GPS + Meshtastic | Done, `TrackerService` now sends real `meshtastic_Position` packets (see below) | GPS icon / actual position receipt still pending an outdoor fix |
-| 6 -- Tracker Behaviour | Not started (blocked on BMS polarity -- see `board/README.md#open-questions`) | Pending |
+| 6 -- Tracker Behaviour | Done, BMS-HIGH continuous path confirmed on real hardware; BMS-LOW sleep-cycle path implemented + code-verified but not yet observed running (needs the physical switch flipped, see below) | Toggling the switch and confirming the LOW-side sleep/wake cycle still pending |
 | 7 -- Charging Behaviour | Not started | Pending |
-| 8 -- Deep Sleep | Not started | Pending |
+| 8 -- Deep Sleep | Partially done as a side effect of Phase 6 (RTC-timer wake via `doDeepSleep`); BMS/USB wake sources still pending | Pending |
 | 9 -- Power Validation | N/A (physical measurement only) | Pending |
 | 10 -- Field Trial | N/A (physical trial only) | Pending |
 
@@ -157,3 +157,51 @@ captures is a benign quirk in that stock code path (not ours to patch, per
   skipped sending a position (no GPS fix indoors) instead of sending a
   meaningless (0,0) -- exactly the intended behavior; not yet verified with
   an actual fix, which needs open sky.
+
+## Phase 6 notes
+
+- Resolved the BMS polarity question 2026-07-19 per explicit instruction:
+  follow `firmware/AGENTS.md` as authoritative, disregard `MOD.md`'s opposite
+  naming (see `board/README.md#open-questions`).
+- Researched rather than guessed how a `TRACKER`-role Meshtastic device is
+  meant to sleep, since inventing bespoke sleep logic risked fighting stock
+  `PowerFSM`: `PowerFSM.cpp` explicitly skips adding its own light-sleep
+  timers for `TRACKER`/`TAK_TRACKER`/`SENSOR` roles ("sleep will be initiated
+  through the modules"), and `PositionModule.cpp` shows the exact expected
+  pattern for a tracker module to follow -- send, then `setIntervalFromNow`
+  a short grace period, then call `doDeepSleep()` on the *next* tick (so the
+  packet has time to actually get on air first). `TrackerService`'s BMS-LOW
+  path mirrors this pattern.
+- `LiaBoard` now registers a `notifyDeepSleep` observer in `begin()` that
+  calls `disablePeripherals()` (cuts PPC, the shared SX1262+GPS rail) before
+  any deep sleep actually happens. Confirmed this fires for us specifically:
+  `sleep.cpp` only *skips* calling `notifyDeepSleep` when `shouldLoraWake()`
+  is true, which by its own source is only true for `ROUTER`/`ROUTER_LATE`
+  roles -- not `TRACKER`.
+- `TrackerService::runOnce()` now branches on `LiaBoard::instance().isBmsHigh()`:
+  - **HIGH ("continuous")**: RED LED solid on, keep the existing 30s send
+    cadence indefinitely, never sleep.
+  - **LOW ("sleep-cycle")**: send once (or wait up to 90s for a first fix,
+    `kFixWaitTimeoutMs`), then deep sleep 60s (`kSleepCycleMs`) and let the
+    next wake's fresh boot repeat the cycle.
+- Build succeeded clean on the first try (no compile errors, unlike Phase 2's
+  two-bug episode) -- another `Could not open COM4` USB hiccup blocked the
+  reflash temporarily, cleared by a replug as usual.
+- **Confirmed on real hardware, BMS-HIGH path only**: the current physical
+  switch position is HIGH. Serial log shows `TrackerService: no GPS fix yet`
+  at uptime 31s, 61s, and 91s -- each exactly 30s apart, matching
+  `kContinuousIntervalMs`. This is the evidence it's the continuous path
+  specifically (the BMS-LOW branch would retry every 5s instead while still
+  within the fix-wait window). No crash, no attempted sleep -- correct per
+  spec. RED LED should be solid on now; not visually confirmed (no camera on
+  this end).
+- **BMS-LOW sleep-cycle path is implemented and compiles, but not yet
+  observed actually running** -- that needs the physical switch flipped to
+  LOW, which only the user can do. Expect the board to go briefly silent on
+  serial (deep sleep fully powers down the USB-Serial-JTAG peripheral, so the
+  USB connection will legitimately drop, not just go quiet) and come back
+  with a fresh boot sequence roughly a minute later.
+- Also requires `device.role` set to `TRACKER` via the app/CLI for the sleep
+  behavior to work as intended (see `services/README.md`) -- not yet
+  confirmed this has been set; if it's still the default role, stock
+  `PowerFSM` may add its own competing light-sleep transitions.

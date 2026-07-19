@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "Observer.h"
+
 /// Hardware abstraction for the LIA-specific peripherals that stock
 /// Meshtastic has no concept of: peripheral power gating (PPC), the RED
 /// status LED, the BMS mode switch, and TP4056 charger status.
@@ -39,16 +41,22 @@ class LiaBoard
     /// TP4056 STBY output (open-drain, active low): true once charge is complete.
     bool isChargeComplete() const;
 
-    /// BMS switch reading. Raw HIGH/LOW only -- firmware/AGENTS.md Phase 6
-    /// ties BMS HIGH to continuous/no-sleep behaviour, which is the opposite
-    /// polarity from the original "BMS high = Tracker mode" note in MOD.md.
-    /// Resolve that naming conflict with the user before wiring Phase 6's
-    /// state machine to this; don't assume which label is current.
+    /// BMS switch reading. Per firmware/AGENTS.md (the authoritative source --
+    /// MOD.md's opposite "BMS high = Tracker mode" note is superseded): BMS
+    /// HIGH means continuous/no-sleep behaviour, BMS LOW means the
+    /// wake-every-minute sleep cycle. See TrackerService for the state
+    /// machine that acts on this.
     bool isBmsHigh() const;
 
   private:
     LiaBoard() = default;
 
+    /// Cuts PPC before the system actually deep sleeps, regardless of what
+    /// triggered it (TrackerService's own doDeepSleep() calls, or in
+    /// principle any other stock sleep path). Registered in begin().
+    int onDeepSleep(void *unused);
+
     bool began_ = false;
     bool peripheralsEnabled_ = false;
+    CallbackObserver<LiaBoard, void *> deepSleepObserver_ = CallbackObserver<LiaBoard, void *>(this, &LiaBoard::onDeepSleep);
 };
