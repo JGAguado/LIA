@@ -22,8 +22,6 @@ void LiaBoard::begin()
         return;
     began_ = true;
 
-    deepSleepObserver_.observe(&notifyDeepSleep);
-
     pinMode(LIA_PIN_PPC, OUTPUT);
     disablePeripherals();
 
@@ -38,6 +36,11 @@ void LiaBoard::begin()
     ledcAttachPin(LIA_PIN_LED_RED, kRedLedLedcChannel);
 #endif
     setRedLed(0);
+}
+
+void LiaBoard::armDeepSleepHook()
+{
+    deepSleepObserver_.observe(&notifyDeepSleep);
 }
 
 void LiaBoard::enablePeripherals()

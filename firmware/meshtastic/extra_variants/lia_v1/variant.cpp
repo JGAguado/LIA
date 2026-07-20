@@ -26,6 +26,15 @@ void earlyInitVariant()
 void lateInitVariant()
 {
     LOG_INFO("LiaBoard: peripherals=%d (PPC=GPIO%d)", LiaBoard::instance().peripheralsEnabled(), LIA_PIN_PPC);
+
+    // Must run after initLoRa() (already true here) and after GPS::setup(),
+    // both of which register their own notifyDeepSleep observers to command
+    // their hardware to standby/sleep gracefully over SPI/UART while it still
+    // has power. Observable fires in registration order, so registering ours
+    // any earlier cuts PPC before those graceful commands can land -- see
+    // LiaBoard::armDeepSleepHook()'s comment for the crash this caused.
+    LiaBoard::instance().armDeepSleepHook();
+
     new TrackerService();
 }
 

@@ -24,6 +24,18 @@ class LiaBoard
     /// are touched -- called from earlyInitVariant(), not lateInitVariant().
     void begin();
 
+    /// Registers the PPC-cutoff deep-sleep hook. Must run from
+    /// lateInitVariant(), NOT begin()/earlyInitVariant(): RadioInterface and
+    /// GPS both register their own notifyDeepSleep observers during their own
+    /// init (before lateInitVariant() runs), to gracefully command the SX1262
+    /// and GNSS to standby over SPI/UART while they still have power.
+    /// Observable fires observers in registration order, so registering this
+    /// any earlier cuts PPC *before* those graceful-shutdown commands can
+    /// reach the hardware -- confirmed via a real crash: RadioInterface's
+    /// SX126xInterface::sleep() -> setStandby() SPI command failed
+    /// (RadioLib err=-707) once PPC had already gone low first.
+    void armDeepSleepHook();
+
     /// Power the SX1262 and SAM-M10Q (PPC high).
     void enablePeripherals();
 
@@ -53,7 +65,7 @@ class LiaBoard
 
     /// Cuts PPC before the system actually deep sleeps, regardless of what
     /// triggered it (TrackerService's own doDeepSleep() calls, or in
-    /// principle any other stock sleep path). Registered in begin().
+    /// principle any other stock sleep path). Registered by armDeepSleepHook().
     int onDeepSleep(void *unused);
 
     bool began_ = false;

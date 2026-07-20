@@ -38,12 +38,21 @@ global, per the "No globals" coding standard. It's driven from
   Meshtastic checkout: `lateInitVariant()` runs *after* the LoRa radio is
   initialized).
 - Deep-sleep power-down (`disablePeripherals()`) is wired to Meshtastic's
-  `notifyDeepSleep` observable (Phase 6), registered once in `begin()`. This
-  fires for any deep sleep path system-wide, not just `TrackerService`'s own
-  `doDeepSleep()` calls -- confirmed this actually runs for LIA: Meshtastic
-  only *skips* calling `notifyDeepSleep` when `shouldLoraWake()` is true,
-  which is only the case for `ROUTER`/`ROUTER_LATE` roles (`sleep.cpp`), not
-  `TRACKER`.
+  `notifyDeepSleep` observable (Phase 6). This fires for any deep sleep path
+  system-wide, not just `TrackerService`'s own `doDeepSleep()` calls --
+  confirmed this actually runs for LIA: Meshtastic only *skips* calling
+  `notifyDeepSleep` when `shouldLoraWake()` is true, which is only the case
+  for `ROUTER`/`ROUTER_LATE` roles (`sleep.cpp`), not `TRACKER`.
+  **Registration point matters**: `RadioInterface::init()` and
+  `GPS::setup()` *each also* register their own `notifyDeepSleep` observer
+  (to command the SX1262/GNSS to standby gracefully over SPI/UART while
+  still powered), both before `lateInitVariant()` runs. `Observable` fires
+  observers in registration order, so `armDeepSleepHook()` (which does the
+  actual `.observe()` call) must be called from `lateInitVariant()`, *not*
+  from `begin()`/`earlyInitVariant()` -- registering earlier cuts PPC before
+  those graceful commands can reach the hardware. Confirmed by a real crash
+  (`SX126xInterface::setStandby()` failing with `RadioLib err=-707` once PPC
+  had already gone low first) before this was fixed.
 
 ## Open questions
 

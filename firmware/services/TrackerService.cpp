@@ -4,6 +4,7 @@
 #include "NodeDB.h"
 #include "airtime.h"
 #include "lia/LiaBoard.h"
+#include "mesh/Channels.h"
 #include "sleep.h"
 
 TrackerService::TrackerService() : SinglePortModule("Tracker", meshtastic_PortNum_POSITION_APP), concurrency::OSThread("Tracker")
@@ -50,8 +51,27 @@ int32_t TrackerService::runOnce()
     return kContinuousIntervalMs;
 }
 
+int16_t TrackerService::findChannelIndexByName(const char *name)
+{
+    for (ChannelIndex i = 0; i < channels.getNumChannels(); i++) {
+        if (strcasecmp(channels.getName(i), name) == 0)
+            return i;
+    }
+    return -1;
+}
+
 void TrackerService::sendPosition()
 {
+    int16_t channelIndex = findChannelIndexByName(kChannelName);
+    if (channelIndex < 0) {
+        // Fail closed: never fall back to the default/public channel just
+        // because "Test" isn't configured yet -- that would broadcast the
+        // position to anyone, which is exactly what naming a channel here
+        // was meant to prevent.
+        LOG_WARN("TrackerService: no channel named \"%s\" configured, skipping position send", kChannelName);
+        return;
+    }
+
     meshtastic_Position pos = meshtastic_Position_init_default;
     pos.latitude_i = localPosition.latitude_i;
     pos.longitude_i = localPosition.longitude_i;
@@ -63,10 +83,12 @@ void TrackerService::sendPosition()
 
     meshtastic_MeshPacket *p = allocDataPacket();
     p->to = kDestination;
+    p->channel = (uint8_t)channelIndex;
     p->want_ack = false;
     p->decoded.payload.size = pb_encode_to_bytes(p->decoded.payload.bytes, sizeof(p->decoded.payload.bytes),
                                                   &meshtastic_Position_msg, &pos);
 
     service->sendToMesh(p);
-    LOG_INFO("TrackerService: sent position (lat=%d, lon=%d) to 0x%08x", pos.latitude_i, pos.longitude_i, kDestination);
+    LOG_INFO("TrackerService: sent position (lat=%d, lon=%d) to 0x%08x on channel %d (\"%s\")", pos.latitude_i, pos.longitude_i,
+              kDestination, channelIndex, kChannelName);
 }

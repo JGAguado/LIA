@@ -11,6 +11,26 @@ sending a meaningless (0,0). The destination NodeNum is the single
 `kDestination` constant in `TrackerService.h`, per `firmware/AGENTS.md`
 "Target Node".
 
+### Channel targeting
+
+Position packets are sent on the channel named `"Test"` (`kChannelName` in
+`TrackerService.h`), never on the default/primary channel. Meshtastic
+encrypts per-channel (not per-recipient) and `PositionModule` processes any
+overheard position packet promiscuously regardless of its `to` field, so
+sending on the public default channel would let *any* node on the mesh map
+this device -- sending on a private, PSK-protected channel instead restricts
+visibility to other users who have that same channel configured, per the
+user's request (2026-07-20).
+
+`findChannelIndexByName()` resolves the name to a channel index (0-7) fresh
+on every send rather than caching it, since the lookup is a cheap 8-entry
+scan and re-resolving means a runtime channel reconfiguration (e.g. the user
+adding "Test" after first boot, or moving it to a different slot) takes
+effect without a rebuild. If no channel named "Test" is currently configured,
+`sendPosition()` fails closed -- it logs a warning and skips the send instead
+of falling back to the default channel, since that fallback would silently
+defeat the whole point of restricting visibility.
+
 Behaviour switches on `LiaBoard::instance().isBmsHigh()` (Phase 6):
 
 - **HIGH ("continuous")**: RED LED solid on, send every 30s

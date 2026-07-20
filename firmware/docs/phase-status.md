@@ -15,9 +15,9 @@ hand.
 | 3.5 -- TrackerService | Done, confirmed sending every 30s on real hardware (see below) | N/A |
 | 4 -- SAM-M10Q Integration | Done -- nothing to build, stock Meshtastic auto-detects the module (`GNSS_MODEL_UBLOX10`) and handles NMEA/UBX via the Phase 0 pin config | Cold/warm fix timing and PPC power-cycling still need outdoor testing |
 | 5 -- GPS + Meshtastic | Done, `TrackerService` now sends real `meshtastic_Position` packets (see below) | GPS icon / actual position receipt still pending an outdoor fix |
-| 6 -- Tracker Behaviour | Done, BMS-HIGH continuous path confirmed on real hardware; BMS-LOW sleep-cycle path implemented + code-verified but not yet observed running (needs the physical switch flipped, see below) | Toggling the switch and confirming the LOW-side sleep/wake cycle still pending |
+| 6 -- Tracker Behaviour | Done, both BMS-HIGH and BMS-LOW paths confirmed on real hardware across multiple full sleep/wake cycles (see below) | Toggle-without-reflashing confirmed for BMS LOW; HIGH<->LOW toggle-while-running not yet explicitly re-tested |
 | 7 -- Charging Behaviour | Not started | Pending |
-| 8 -- Deep Sleep | Partially done as a side effect of Phase 6 (RTC-timer wake via `doDeepSleep`); BMS/USB wake sources still pending | Pending |
+| 8 -- Deep Sleep | Partially done as a side effect of Phase 6 (RTC-timer wake via `doDeepSleep`, confirmed repeatable); BMS-wake and USB-wake sources still pending | Pending |
 | 9 -- Power Validation | N/A (physical measurement only) | Pending |
 | 10 -- Field Trial | N/A (physical trial only) | Pending |
 
@@ -195,13 +195,80 @@ captures is a benign quirk in that stock code path (not ours to patch, per
   within the fix-wait window). No crash, no attempted sleep -- correct per
   spec. RED LED should be solid on now; not visually confirmed (no camera on
   this end).
-- **BMS-LOW sleep-cycle path is implemented and compiles, but not yet
-  observed actually running** -- that needs the physical switch flipped to
-  LOW, which only the user can do. Expect the board to go briefly silent on
-  serial (deep sleep fully powers down the USB-Serial-JTAG peripheral, so the
-  USB connection will legitimately drop, not just go quiet) and come back
-  with a fresh boot sequence roughly a minute later.
+- **BMS-LOW sleep-cycle path: first attempt crashed.** With the switch
+  flipped to LOW (during a later GPS-test session), the board got a real GPS
+  fix (36s to lock, 12 satellites) and `TrackerService` sent a real,
+  non-(0,0) position -- then crashed entering deep sleep:
+  ```
+  SX126x entering sleep mode
+  SX126x standby RadioLib err=-707
+  assert failed: void SX126xInterface<T>::setStandby() ... err == RADIOLIB_ERR_NONE
+  ```
+  Root cause (found by grepping for the log string rather than guessing):
+  `RadioInterface::init()` (called during `initLoRa()`, before
+  `lateInitVariant()`) and `GPS::setup()` **each register their own
+  `notifyDeepSleep` observer**, to gracefully command the SX1262/GNSS to
+  standby over SPI/UART while still powered. `Observable` fires observers in
+  registration order. `LiaBoard`'s observer was registered in `begin()`
+  (called from `earlyInitVariant()`, which runs *before* both of those) --
+  so PPC was being cut *before* RadioInterface got a chance to send its
+  graceful SPI standby command, and that command failed against unpowered
+  hardware, tripping Meshtastic's own internal assert.
+  **Fix**: split the registration out into a new
+  `LiaBoard::armDeepSleepHook()`, called from `lateInitVariant()` instead --
+  which runs after both `initLoRa()` and `GPS::createGps()`/`setup()`, so
+  those two observers are already registered (and will fire) before ours.
+- **Confirmed fixed and fully working across two complete sleep/wake
+  cycles**, still on the BMS-LOW switch position:
+  - Cycle 1: real fix (lat=47.842260, lon=16.259864, alt=287m) sent
+    successfully, then `SX126x entering sleep mode` (no error this time),
+    `GPS deep sleep!` / `GPS power state move from HARDSLEEP to OFF`, prefs
+    saved cleanly, then the serial connection genuinely dropped (real deep
+    sleep powers off the USB-Serial-JTAG peripheral -- confirmed via
+    `Get-PnpDevice` showing all three USB interfaces go `Unknown`).
+  - The board came back ~70-80s later (`Get-PnpDevice` interfaces back to
+    `OK`) with no manual replug needed -- a genuine RTC-timer wake, not a
+    crash-reboot.
+  - Cycle 2: reconnected mid-cycle and caught it already running again
+    (uptime ~50s, sending `DeviceTelemetry`), then cleanly re-entering the
+    same sleep sequence a second time -- confirms the cycle repeats
+    correctly, not just a one-off.
 - Also requires `device.role` set to `TRACKER` via the app/CLI for the sleep
-  behavior to work as intended (see `services/README.md`) -- not yet
-  confirmed this has been set; if it's still the default role, stock
-  `PowerFSM` may add its own competing light-sleep transitions.
+  behavior to work as intended (see `services/README.md`) -- not explicitly
+  re-confirmed after this fix, but the observed behavior (clean sleep, no
+  competing PowerFSM light-sleep transitions) is consistent with it already
+  being set.
+
+## Phase 6 addendum: channel-targeted position sending (2026-07-20)
+
+User asked: position was reaching the destination node fine, but since
+Meshtastic encrypts per-channel (not per-recipient) and `PositionModule` is
+`isPromiscuous` (any node updates its map from any overheard position packet
+regardless of the packet's `to` field), sending on the default/public
+channel meant *any* node on the mesh could map this device, not just the
+intended destination. Requested restricting visibility to other users on a
+private channel already configured on the device, named `"Test"`, looked up
+dynamically since it could be at any of the 8 channel slots.
+
+- `TrackerService::findChannelIndexByName()` scans `channels.getNumChannels()`
+  entries via `channels.getName(i)` (case-insensitive), returning the index of
+  the first match or `-1`. `sendPosition()` fails closed on `-1` -- logs a
+  warning and skips the send rather than falling back to the default
+  channel, since that fallback would silently defeat the point.
+- Kept the existing unicast `p->to = kDestination` unchanged; only added
+  `p->channel = <found index>`, matching stock `PositionModule::sendOurPosition()`'s
+  own `if (channel > 0) p->channel = channel;` pattern (confirmed fresh
+  against `PositionModule.cpp:342-372` in the checkout before implementing).
+- **Confirmed on real hardware**: the device's "Test" channel resolved to
+  index 1. Serial log:
+  ```
+  [Tracker] TrackerService: sent position (lat=478422330, lon=162600680) to 0xdce6d663 on channel 1 ("Test")
+  ```
+  repeated twice, 30s apart. The actual TX packets show `Ch=0x7d` (the
+  "Test" channel's PSK-derived hash), visibly different from the default
+  channel's `Ch=0x8` seen on this same boot's NodeInfo broadcast --
+  confirming the position packets are encrypted under a different key than
+  the public default channel, not just logged as if they were. Real GPS fix
+  acquired during this same capture (36s to lock, 10 satellites,
+  lat=47.842233, lon=16.260068), and real RF RX/rebroadcast activity
+  observed (`Rx someone rebroadcasting for us`).

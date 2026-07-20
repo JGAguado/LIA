@@ -39,6 +39,14 @@ class TrackerService : public SinglePortModule, private concurrency::OSThread
     // Migrate to a configurable node ID in a later phase.
     static constexpr NodeNum kDestination = 0xDCE6D663;
 
+    // Position packets are sent only on this named channel, never on the
+    // default/public one -- so the fix is decodable only by other users who
+    // share this channel's PSK (see firmware/services/README.md "Channel
+    // targeting"). Looked up by name each send rather than hardcoding an
+    // index, since the user may have it configured at any of the 8 channel
+    // slots.
+    static constexpr const char *kChannelName = "Test";
+
     // BMS HIGH: keep this send cadence indefinitely, no sleep.
     static constexpr uint32_t kContinuousIntervalMs = 30000;
     // BMS LOW: deep sleep this long between wake/send cycles ("wake every minute").
@@ -51,6 +59,11 @@ class TrackerService : public SinglePortModule, private concurrency::OSThread
     static constexpr uint32_t kFixWaitTimeoutMs = 90000;
 
     void sendPosition();
+    // Returns the index of the channel named kChannelName, or -1 if no such
+    // channel is currently configured. Callers must fail closed on -1 rather
+    // than falling back to the default channel (that would defeat the point
+    // of restricting sends to a private channel).
+    static int16_t findChannelIndexByName(const char *name);
 
     const uint32_t bootMs_ = millis();
     bool sleepOnNextExecution_ = false;
