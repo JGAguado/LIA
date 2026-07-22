@@ -13,7 +13,7 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 | Method | Backing pin | Notes |
 | --- | --- | --- |
 | `enablePeripherals()` / `disablePeripherals()` | `LIA_PIN_PPC` (GPIO21) | Gates power to the SX1262 and SAM-M10Q. Must be enabled before either is touched. |
-| `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Common-anode PWM, 0 = off / 255 = full brightness. |
+| `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Active-high PWM, 0 = off / 255 = full brightness (see "Open questions"). |
 | `isCharging()` | `LIA_PIN_CHG` (GPIO1) | TP4056 `CHRG`, open-drain active-low. |
 | `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | True when `STBY` reads HIGH -- per explicit instruction (2026-07-22), see "Open questions" below. |
 | `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). |
@@ -56,6 +56,14 @@ global, per the "No globals" coding standard. It's driven from
 
 ## Open questions
 
+- ~~**RED LED polarity.**~~ Resolved 2026-07-22: `setRedLed()` was assumed
+  common-anode (channel lights when driven LOW) and inverted its duty cycle
+  accordingly. Real hardware showed the LED ON while BMS read LOW (which
+  calls `setRedLed(0)`, intending OFF) -- the channel actually lights when
+  driven HIGH, so the inversion was removed. Confirmed against
+  `TrackerService`'s already-independently-confirmed BMS branching (send
+  cadence, sleep triggering), so the mismatch was isolated to the LED driver,
+  not the BMS read.
 - ~~**BMS polarity.**~~ Resolved 2026-07-19: follow `firmware/AGENTS.md`
   (Phase 6) as the authoritative source -- BMS HIGH is continuous/no-sleep,
   BMS LOW is the wake-every-minute sleep cycle. `MOD.md`'s opposite polarity

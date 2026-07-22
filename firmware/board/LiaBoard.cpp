@@ -57,12 +57,15 @@ void LiaBoard::disablePeripherals()
 
 void LiaBoard::setRedLed(uint8_t brightness)
 {
-    // Common-anode: the channel lights when driven LOW, so invert the duty cycle.
-    uint8_t duty = 255 - brightness;
+    // Was assumed common-anode (channel lights when driven LOW, so inverted
+    // the duty cycle) -- real hardware showed the opposite: with BMS read
+    // LOW, TrackerService calls setRedLed(0) intending OFF, but the LED was
+    // observed ON (2026-07-22). The channel actually lights when driven
+    // HIGH, so no inversion.
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-    ledcWrite(LIA_PIN_LED_RED, duty);
+    ledcWrite(LIA_PIN_LED_RED, brightness);
 #else
-    ledcWrite(kRedLedLedcChannel, duty);
+    ledcWrite(kRedLedLedcChannel, brightness);
 #endif
 }
 

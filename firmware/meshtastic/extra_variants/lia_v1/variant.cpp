@@ -2,6 +2,7 @@
 
 #ifdef _VARIANT_LIA_V1
 
+#include "esp_sleep.h"
 #include "lia/LiaBoard.h"
 
 // Runs at the start of setup(), directly after waitUntilPowerLevelSafe() and
@@ -38,6 +39,30 @@ void lateInitVariant()
 
     new TrackerService();
     new ChargeStatusService();
+}
+
+// Weak-overridden per firmware/main-esp32.cpp's cpuDeepSleep(): called right
+// before it configures the RTC-domain wake sources and calls
+// esp_deep_sleep_start() (the timer wakeup for kSleepCycleMs is enabled
+// immediately after this returns, so it always applies alongside whichever
+// of these fires). Phase 8 "BMS wake" / "USB wake": without this, the
+// sleep-cycle branch only wakes on its kSleepCycleMs timer, so flipping the
+// BMS switch or plugging in a charger while the board is mid-sleep would sit
+// unnoticed for up to that long.
+//
+// GPIO1 (CHG) and GPIO15 (BMS) are both RTC-capable on ESP32-S3 (0-21), but
+// ext0 is a single-pin/single-level source and ext1 applies one shared level
+// to its whole bitmask -- since CHG needs LOW and BMS needs HIGH, they can't
+// share one call, so each gets its own independent HW wake source instead.
+// There's no separate VBUS-sense pin on this board (see firmware/AGENTS.md
+// hardware table), so CHG (active low, asserted whenever a charger is
+// actively charging the battery) is the closest available proxy for "USB
+// connected" -- confirm this reads as intended once real hardware is
+// available to test a sleep-then-plug-in cycle.
+void variant_shutdown()
+{
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)LIA_PIN_CHG, LOW);
+    esp_sleep_enable_ext1_wakeup(1ULL << LIA_PIN_BMS, ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 
 #endif // _VARIANT_LIA_V1

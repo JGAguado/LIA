@@ -259,6 +259,17 @@ Deliverables:
 - Radio sleep.
 - GPS power-down.
 
+RTC wake, radio sleep, and GPS power-down were already confirmed in Phase 6
+(TrackerService's sleep-cycle path + LiaBoard's notifyDeepSleep hook -- see
+`docs/phase-status.md` Phase 6 notes). BMS wake and USB wake are ext0/ext1
+RTC-IO wake sources armed from a `variant_shutdown()` override, immediately
+before every `cpuDeepSleep()` call: BMS wake fires on the BMS pin going HIGH
+(switch flipped to continuous while asleep), USB wake fires on the CHG pin
+going LOW (a charger starts actively charging the battery). There is no
+separate VBUS-sense pin on this board (see the GPIO table above), so CHG is
+the closest available proxy for "USB connected" -- confirm this is close
+enough in practice during Phase 8's real-hardware validation.
+
 User Validation:
 - Measure current.
 - Verify wake sources.

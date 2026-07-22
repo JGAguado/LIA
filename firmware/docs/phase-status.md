@@ -305,3 +305,52 @@ unconfirmed assumption (`board/README.md` "Open questions"). `isCharging()`'s
   `"Charging"` and `"Device charged"` messages arrived at the target node as
   expected. This is the first real confirmation of the `STBY`-HIGH polarity
   flip; no counter-evidence, so it stands as correct going forward.
+- **RED LED polarity bug found and fixed** (2026-07-22), also surfaced during
+  this phase's live testing: `LiaBoard::setRedLed()` assumed common-anode
+  wiring (channel lights when driven LOW) and inverted its duty cycle
+  accordingly, but real hardware showed the LED ON while BMS read LOW (which
+  calls `setRedLed(0)`, intending OFF). `TrackerService`'s BMS branching
+  itself was already independently confirmed correct (send cadence, sleep
+  triggering), isolating the bug to the LED driver's polarity assumption, not
+  the BMS read. Fixed by removing the inversion; user confirmed both LED
+  states correct after reflashing (solid ON in continuous/BMS-HIGH, OFF in
+  sleep-cycle/BMS-LOW).
+
+## Phase 8 notes
+
+RTC wake, radio sleep, and GPS power-down were already confirmed in Phase 6.
+Added BMS wake and USB wake as additional deep-sleep wake sources: a
+`variant_shutdown()` override (weak-overridden per
+`src/platform/esp32/main-esp32.cpp`'s `cpuDeepSleep()`, called immediately
+before it configures RTC-domain wake sources and calls
+`esp_deep_sleep_start()`) arms `esp_sleep_enable_ext0_wakeup(LIA_PIN_CHG,
+LOW)` and `esp_sleep_enable_ext1_wakeup(1ULL << LIA_PIN_BMS,
+ESP_EXT1_WAKEUP_ANY_HIGH)`.
+
+Both GPIO1 (CHG) and GPIO15 (BMS) are RTC-capable on ESP32-S3 (confirmed via
+`rtc_io_channel.h`: `RTCIO_GPIO1_CHANNEL`/`RTCIO_GPIO15_CHANNEL` both exist,
+`SOC_RTCIO_PIN_COUNT` is 22, i.e. GPIO0-21). ext0 is a single-pin/single-level
+source and ext1 applies one shared level across its whole bitmask -- since
+CHG needs LOW and BMS needs HIGH, they can't share one registration, so each
+pin gets its own independent HW wake source (ext0 for CHG, ext1 for BMS)
+instead. There's no separate VBUS-sense pin on this board, so CHG (asserted
+whenever the TP4056 is actively charging the battery) is the closest
+available proxy for "USB connected."
+
+- Build succeeded clean and flashed successfully to COM4.
+- **Confirmed no regression on real hardware**: a 40s post-flash capture
+  shows a clean boot, no crash, `TrackerService` running normally.
+- **Confirmed real deep sleep still enters cleanly** with `variant_shutdown()`
+  now wired in: switching BMS to LOW, the board waited the full
+  `kFixWaitTimeoutMs` (no fix indoors), then `TrackerService: entering deep
+  sleep for 60s (BMS low)`, graceful SX1262/GPS shutdown, prefs saved, no
+  crash or assert -- same clean sequence as Phase 6's already-verified path,
+  confirming the new wake-source registration doesn't interfere with normal
+  sleep entry.
+- **BMS wake / USB wake early-wake timing not yet directly captured**: no
+  serial capture yet shows a wake happening *before* the 60s RTC timer would
+  have fired anyway (the wake source that actually fired isn't distinguished
+  in this round of testing). Needs a timed test -- flip BMS back to HIGH (or
+  toggle CHG) a few seconds into the sleep window and confirm the reported
+  wake cause (`ext0 RTC_IO` vs `ext1 RTC_CNTL` vs `timer`, per
+  `sleep.cpp::initDeepSleep()`'s logging) and that it happens well under 60s.
