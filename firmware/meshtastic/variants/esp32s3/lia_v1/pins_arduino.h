@@ -12,13 +12,9 @@
 static const uint8_t TX = 43;
 static const uint8_t RX = 44;
 
-// Arduino-ESP32's Wire library references SDA/SCL unconditionally at compile
-// time (TwoWire::initPins()'s fallback default), regardless of whether
-// anything actually calls Wire.begin(). Declaring the pin numbers here does
-// NOT initialize or scan the I2C bus -- only an explicit Wire.begin() call
-// would, and neither Meshtastic core nor our own code makes one without the
-// I2C_SDA/I2C_SCL variant.h macros, which are deliberately not defined (see
-// firmware/AGENTS.md "Hardware Constraints").
+// Actually used on this revision (post-rework, see variant.h): variant.h
+// defines I2C_SDA/I2C_SCL, so Meshtastic's stock Wire.begin(I2C_SDA, I2C_SCL)
+// call picks these up.
 static const uint8_t SDA = 4;
 static const uint8_t SCL = 5;
 

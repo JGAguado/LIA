@@ -362,3 +362,42 @@ available proxy for "USB connected."
   toggle CHG) a few seconds into the sleep window and confirm the reported
   wake cause (`ext0 RTC_IO` vs `ext1 RTC_CNTL` vs `timer`, per
   `sleep.cpp::initDeepSleep()`'s logging) and that it happens well under 60s.
+
+## lia_v1 I2C rework (2026-07-22)
+
+A solder rework crossing SDA/SCL back on the LSM6DSOXTR IMU's connection
+fixed the original wiring defect that made the bus unusable (see
+`board/README.md` "Open questions"). `variant.h` now defines `I2C_SDA`/
+`I2C_SCL` (GPIO4/5) directly on `lia_v1` (this is a physical rework to the
+existing board, not a new PCB revision like `lia_v2`) -- both the MAX17048
+battery gauge and the IMU should now be usable, with no LIA-specific code
+required (same mechanism as `lia_v2`, see `services/README.md`).
+
+- Build succeeded clean and flashed successfully to COM4.
+- Getting a clean capture of the boot-time I2C scan took several attempts:
+  this board's USB-Serial-JTAG interface doesn't become openable until
+  roughly 15s into boot, well after the scan already ran and scrolled by
+  unbuffered. A plain reflash-then-capture raced this reliably on the
+  `lia_v2` board earlier but not consistently here; what finally worked was
+  a retry-loop script that kept re-opening the port across a real physical
+  USB unplug/replug until the read succeeded (`serial_capture_robust.py`,
+  scratchpad-only, not part of the repo).
+- **Confirmed on real hardware**: clean boot, no crash, and the I2C scan
+  shows both devices:
+  ```
+  Scan for i2c devices
+  MAX17048 found at address 0x36
+  Register value from 0x6b: 0x6c
+  QMI8658 found at address 0x6b
+  2 I2C devices found
+  ```
+  The IMU is logged as "QMI8658" rather than "LSM6DSOXTR"/"LSM6DS3" --
+  0x6C is the LSM6DSOX family's actual `WHO_AM_I` chip-ID value, and
+  `ScanI2CTwoWire` apparently resolves that ID/address combination to the
+  QMI8658 label rather than the LSM6DS3 one it uses elsewhere (both are
+  common register-compatible 6-axis IMUs at this address) -- the physical
+  part is still the LSM6DSOXTR, just surfaced under Meshtastic's own device
+  labelling for that chip ID.
+- Not yet done: reading either sensor's actual telemetry output (gauge
+  voltage/percent, IMU accel/gyro) from the mesh to confirm real data, not
+  just presence detection.

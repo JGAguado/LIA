@@ -17,11 +17,17 @@ LIA (Off-grid. On Track.) is an open-source Meshtastic-based pet tracker built a
 
 Current PCB revision limitations:
 
-- Ignore the entire I²C bus.
 - Ignore GREEN LED.
 - Ignore BLUE LED.
 
 These peripherals SHALL NOT be initialized nor referenced.
+
+As manufactured, the I2C bus also had to be ignored: SDA/SCL were crossed on
+the LSM6DSOXTR IMU's connection, causing bus errors. This unit has since had
+a solder rework crossing them back (2026-07-22), after which both the IMU
+and the MAX17048 battery gauge are detectable -- see
+`firmware/board/README.md` "Open questions". `variant.h` now defines
+`I2C_SDA`/`I2C_SCL`; **do not assume this is safe on an unreworked board.**
 
 ## Functional Hardware
 

@@ -5,9 +5,17 @@
 // hardware/kicad/LIA.kicad_sch. See firmware/AGENTS.md for the authoritative
 // pinout table and hardware constraints.
 //
-// Hardware constraint (current PCB revision): the I2C bus (SDA/SCL, IMU_INT)
-// and the green/blue LED channels are NOT wired for use and MUST NOT be
-// referenced here -- do not add I2C_SDA/I2C_SCL/HAS_RGB_LED/RGBLED_* defines.
+// Hardware constraint (current PCB revision): the green/blue LED channels
+// are NOT wired for use and MUST NOT be referenced here -- do not add
+// HAS_RGB_LED/RGBLED_* defines.
+//
+// I2C was originally unusable too (SDA/SCL were crossed on the LSM6DSOXTR
+// IMU's connection, causing bus errors) -- as-manufactured boards still have
+// this defect. This specific unit has since had a solder rework crossing
+// SDA/SCL back on the IMU (2026-07-22), after which both the IMU and the
+// MAX17048 battery gauge are detectable on the bus -- see
+// firmware/board/README.md "Open questions". Do not assume I2C works on an
+// unreworked lia_v1 board.
 
 #define _VARIANT_LIA_V1
 #define LIA_V1
@@ -45,6 +53,14 @@
 #define GPS_TX_PIN 17 // ESP32-S3 -> GNSS RX
 #define GPS_RX_PIN 18 // ESP32-S3 <- GNSS TX
 #define GPS_BAUDRATE 9600
+
+// -----------------------------------------------------------------------------
+// I2C -- battery gauge (MAX17048) + IMU (LSM6DSOXTR). Only correct on a unit
+// with the SDA/SCL crossing rework applied (see the note above); do not
+// enable on an unreworked board.
+// -----------------------------------------------------------------------------
+#define I2C_SDA 4
+#define I2C_SCL 5
 
 // -----------------------------------------------------------------------------
 // LIA-specific pins, owned exclusively by LiaBoard (firmware/board/LiaBoard.*)

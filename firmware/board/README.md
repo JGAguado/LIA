@@ -21,8 +21,11 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
 stock Meshtastic, driven by the pin `#define`s in
 [`variant.h`](../meshtastic/variants/esp32s3/lia_v1/variant.h)), and never
-touches I2C or the green/blue LED channels -- both are unavailable on the
-current PCB revision (see `firmware/AGENTS.md` "Hardware Constraints").
+touches the green/blue LED channels -- unavailable on this PCB revision (see
+`firmware/AGENTS.md` "Hardware Constraints"). It also doesn't touch I2C: no
+LIA-specific code is needed there either -- see "Open questions" below and
+`firmware/services/README.md` for how the MAX17048 battery gauge (and the
+LSM6DSOXTR IMU) get picked up automatically by stock Meshtastic.
 
 ## Wiring into Meshtastic
 
@@ -56,6 +59,12 @@ global, per the "No globals" coding standard. It's driven from
 
 ## Open questions
 
+- ~~**I2C bus errors.**~~ As-manufactured, SDA/SCL were crossed on the
+  LSM6DSOXTR IMU's connection, causing bus errors -- `variant.h` originally
+  forbade defining `I2C_SDA`/`I2C_SCL` at all. This unit has since had a
+  solder rework crossing them back (2026-07-22); `variant.h` now defines
+  those macros (GPIO4/5). **This does not apply to an unreworked board** --
+  don't assume I2C works without the same rework.
 - ~~**RED LED polarity.**~~ Resolved 2026-07-22: `setRedLed()` was assumed
   common-anode (channel lights when driven LOW) and inverted its duty cycle
   accordingly. Real hardware showed the LED ON while BMS read LOW (which

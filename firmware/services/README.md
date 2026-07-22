@@ -1,5 +1,19 @@
 # Services
 
+## Battery gauge + IMU (I2C)
+
+No LIA-specific service needed: `variant.h` defines `I2C_SDA`/`I2C_SCL`,
+which is all stock Meshtastic requires -- `src/main.cpp` calls
+`Wire.begin(I2C_SDA, I2C_SCL)` and runs `i2cScanner->scanPort()` whenever
+`I2C_SDA` is defined; `ScanI2CTwoWire.cpp` already recognizes both the
+MAX17048 battery gauge and the LSM6DSOXTR IMU at their fixed I2C addresses
+and registers `MAX17048Sensor`/`LSM6DS3Sensor`, which then report through
+Meshtastic's normal `PowerTelemetry`/`DeviceTelemetry` and motion-sensor
+paths -- the same mechanism any stock Meshtastic board with these parts
+uses. This only works because of a solder rework crossing SDA/SCL back on
+the IMU's connection (2026-07-22) -- see `board/README.md` "Open questions"
+for why the bus was unusable before that.
+
 ## MeshTargets.h / ChannelLookup
 
 Shared configuration used by every service that reports to the configured
