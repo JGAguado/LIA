@@ -73,7 +73,7 @@ bool LiaBoard::isCharging() const
 
 bool LiaBoard::isChargeComplete() const
 {
-    return digitalRead(LIA_PIN_STBY) == LOW;
+    return digitalRead(LIA_PIN_STBY) == HIGH;
 }
 
 bool LiaBoard::isBmsHigh() const

@@ -21,6 +21,7 @@ void earlyInitVariant()
     LiaBoard::instance().enablePeripherals();
 }
 
+#include "lia/services/ChargeStatusService.h"
 #include "lia/services/TrackerService.h"
 
 void lateInitVariant()
@@ -36,6 +37,7 @@ void lateInitVariant()
     LiaBoard::instance().armDeepSleepHook();
 
     new TrackerService();
+    new ChargeStatusService();
 }
 
 #endif // _VARIANT_LIA_V1

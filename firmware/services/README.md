@@ -1,5 +1,21 @@
 # Services
 
+## MeshTargets.h / ChannelLookup
+
+Shared configuration used by every service that reports to the configured
+target node: `kLiaTargetNode` (NodeNum, per `firmware/AGENTS.md` "Target
+Node") and `kLiaChannelName` (`"Test"`) live in `MeshTargets.h` -- the one
+place either is defined, so `TrackerService` and `ChargeStatusService` can't
+drift apart. `findLiaChannelIndexByName()` (`ChannelLookup.h/.cpp`) resolves
+a channel name to its index (0-7) fresh on every call rather than caching it,
+since the lookup is a cheap 8-entry scan and re-resolving means a runtime
+channel reconfiguration (e.g. the user adding "Test" after first boot, or
+moving it to a different slot) takes effect without a rebuild. Returns -1 if
+no channel with that name is currently configured; every caller fails closed
+on -1 (logs a warning, skips the send) rather than falling back to the
+default channel, since that fallback would silently defeat the whole point
+of restricting visibility to a named, private channel.
+
 ## TrackerService
 
 Owns periodic mesh transmissions and the tracker/beacon state machine, per
@@ -7,29 +23,18 @@ Owns periodic mesh transmissions and the tracker/beacon state machine, per
 (`meshtastic_Position`, port `POSITION_APP`) as a unicast, built from the
 global `localPosition` (`NodeDB.h`) the same way stock `PositionModule.cpp`
 does -- skips the send if there's no fix yet (lat/lon both zero) rather than
-sending a meaningless (0,0). The destination NodeNum is the single
-`kDestination` constant in `TrackerService.h`, per `firmware/AGENTS.md`
-"Target Node".
+sending a meaningless (0,0). The destination is `kLiaTargetNode`
+(`MeshTargets.h`).
 
 ### Channel targeting
 
-Position packets are sent on the channel named `"Test"` (`kChannelName` in
-`TrackerService.h`), never on the default/primary channel. Meshtastic
-encrypts per-channel (not per-recipient) and `PositionModule` processes any
-overheard position packet promiscuously regardless of its `to` field, so
-sending on the public default channel would let *any* node on the mesh map
-this device -- sending on a private, PSK-protected channel instead restricts
-visibility to other users who have that same channel configured, per the
-user's request (2026-07-20).
-
-`findChannelIndexByName()` resolves the name to a channel index (0-7) fresh
-on every send rather than caching it, since the lookup is a cheap 8-entry
-scan and re-resolving means a runtime channel reconfiguration (e.g. the user
-adding "Test" after first boot, or moving it to a different slot) takes
-effect without a rebuild. If no channel named "Test" is currently configured,
-`sendPosition()` fails closed -- it logs a warning and skips the send instead
-of falling back to the default channel, since that fallback would silently
-defeat the whole point of restricting visibility.
+Position packets are sent on the channel named `kLiaChannelName` (`"Test"`),
+never on the default/primary channel. Meshtastic encrypts per-channel (not
+per-recipient) and `PositionModule` processes any overheard position packet
+promiscuously regardless of its `to` field, so sending on the public default
+channel would let *any* node on the mesh map this device -- sending on a
+private, PSK-protected channel instead restricts visibility to other users
+who have that same channel configured, per the user's request (2026-07-20).
 
 Behaviour switches on `LiaBoard::instance().isBmsHigh()` (Phase 6):
 
@@ -62,3 +67,27 @@ state machine and deep sleep.
 Constructed once from `lateInitVariant()` (`new TrackerService();`) --
 nothing else needs to reference the instance, so no global pointer is kept
 (MeshModule/OSThread both self-register on construction).
+
+## ChargeStatusService
+
+Reports `LiaBoard`'s charger status to `kLiaTargetNode` as plain text
+(`TEXT_MESSAGE_APP`), on the same private `kLiaChannelName` channel
+`TrackerService` uses -- Phase 7, per explicit instruction (2026-07-22) to
+send messages instead of the RED LED breathing/off behaviour
+`firmware/AGENTS.md` originally specified for this phase (see
+`firmware/AGENTS.md` "Phase 7").
+
+Polls `LiaBoard::instance().isCharging()` / `isChargeComplete()` every 3s
+(`kPollIntervalMs`) and sends edge-triggered, not on every poll: `"Charging"`
+once when `isCharging()` goes false->true, `"Device charged"` once when
+`isChargeComplete()` goes false->true. Neither message repeats while its
+condition stays asserted.
+
+`isChargeComplete()`'s `STBY` polarity was flipped to active-HIGH
+2026-07-22 per explicit instruction (see `board/README.md` "Open
+questions") -- this is the real-hardware charge cycle that actually confirms
+or corrects both `CHG` and `STBY` polarity assumptions, since neither had
+been validated against real hardware before this phase.
+
+Constructed once from `lateInitVariant()` (`new ChargeStatusService();`) --
+same self-registration pattern as `TrackerService`, no global pointer kept.

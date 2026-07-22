@@ -15,7 +15,7 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 | `enablePeripherals()` / `disablePeripherals()` | `LIA_PIN_PPC` (GPIO21) | Gates power to the SX1262 and SAM-M10Q. Must be enabled before either is touched. |
 | `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Common-anode PWM, 0 = off / 255 = full brightness. |
 | `isCharging()` | `LIA_PIN_CHG` (GPIO1) | TP4056 `CHRG`, open-drain active-low. |
-| `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | TP4056 `STBY`, open-drain active-low. |
+| `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | True when `STBY` reads HIGH -- per explicit instruction (2026-07-22), see "Open questions" below. |
 | `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). |
 
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
@@ -60,10 +60,12 @@ global, per the "No globals" coding standard. It's driven from
   (Phase 6) as the authoritative source -- BMS HIGH is continuous/no-sleep,
   BMS LOW is the wake-every-minute sleep cycle. `MOD.md`'s opposite polarity
   ("BMS high = Tracker mode" = the sleepy behaviour) is not used.
-- **Charger status polarity.** `isCharging()`/`isChargeComplete()` assume the
-  TP4056's `CHRG`/`STBY` are open-drain active-low (per its datasheet), read
-  with the ESP32's internal pull-ups enabled. Confirm against real hardware
-  in Phase 7.
+- **Charger status polarity.** `isCharging()` still assumes the TP4056's
+  `CHRG` is open-drain active-low (per its datasheet), read with the ESP32's
+  internal pull-up enabled. `isChargeComplete()`'s `STBY` polarity was
+  flipped to active-HIGH 2026-07-22 per explicit instruction, overriding the
+  earlier active-low datasheet assumption -- Phase 7's real-hardware charge
+  cycle is what actually confirms (or corrects) both of these.
 - **GPS fix-wait timeout for the BMS-low sleep cycle** (`TrackerService.h`'s
   `kFixWaitTimeoutMs`, currently 90s) is a real tradeoff (battery vs. fresh
   position) not yet validated against actual cold/warm-fix timing outdoors --

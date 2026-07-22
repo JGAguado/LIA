@@ -272,3 +272,36 @@ dynamically since it could be at any of the 8 channel slots.
   acquired during this same capture (36s to lock, 10 satellites,
   lat=47.842233, lon=16.260068), and real RF RX/rebroadcast activity
   observed (`Rx someone rebroadcasting for us`).
+
+## Phase 7 notes
+
+Superseded per explicit instruction (2026-07-22): no RED LED breathing/off
+behaviour, since `TrackerService` already owns the RED LED for BMS-mode
+indication (Phase 6) and the user asked for status as messages instead. New
+`ChargeStatusService` (`SinglePortModule` + `OSThread`, same pattern as
+`TrackerService`) polls `LiaBoard::instance().isCharging()` /
+`isChargeComplete()` every 3s and sends edge-triggered text -- `"Charging"`
+once when charging starts, `"Device charged"` once when charge-complete is
+detected -- to `kLiaTargetNode` on the private `kLiaChannelName` channel
+(the same shared destination/channel as `TrackerService`, factored out into
+`MeshTargets.h`/`ChannelLookup.h/.cpp` so both agree).
+
+`isChargeComplete()`'s `STBY` read was flipped from the datasheet-assumed
+active-low to active-HIGH per explicit instruction, superseding the earlier
+unconfirmed assumption (`board/README.md` "Open questions"). `isCharging()`'s
+`CHG` read is unchanged (still active-low).
+
+- Build succeeded clean (only pre-existing upstream warnings, none from LIA
+  code) and flashed successfully to COM4.
+- **Confirmed no regression on real hardware**: a 45s post-flash serial
+  capture shows a clean boot with no crash, `TrackerService` running
+  normally (`no GPS fix yet` at uptime 31s and 61s, on schedule), NodeInfo
+  and DeviceTelemetry sending normally -- `ChargeStatusService` present and
+  not erroring, simply hadn't seen a state transition in that window (its
+  edge-triggered design only sends on change, so this alone doesn't confirm
+  polarity).
+- **Charging/charge-complete messages confirmed correct by the user**
+  (2026-07-22) after a live physical test on real hardware -- both the
+  `"Charging"` and `"Device charged"` messages arrived at the target node as
+  expected. This is the first real confirmation of the `STBY`-HIGH polarity
+  flip; no counter-evidence, so it stands as correct going forward.

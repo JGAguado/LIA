@@ -235,15 +235,18 @@ User Validation:
 
 ## Phase 7 – Charging Behaviour
 
-Charging:
-- RED LED breathing animation.
-
-Charge complete:
-- RED LED OFF.
+Superseded 2026-07-22 by explicit instruction: no LED indication for this
+phase. Instead, report status as a mesh text message to the configured
+target node (see "Target Node"), on the same private channel TrackerService
+uses (`ChannelLookup`/`MeshTargets.h`):
+- Send `"Charging"` when CHG is detected (edge-triggered, once per
+  charging-session start).
+- Send `"Device charged"` when STBY reads HIGH (edge-triggered, once per
+  completion).
 
 User Validation:
-- Verify breathing while charging.
-- Verify LED OFF when charge complete.
+- Verify "Charging" message arrives when a charger is connected.
+- Verify "Device charged" message arrives once charging completes.
 
 ---
 
