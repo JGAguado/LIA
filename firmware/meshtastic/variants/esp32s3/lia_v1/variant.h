@@ -58,11 +58,13 @@
 // Beacon Mode Selector switch (see firmware/AGENTS.md Phase 6 for behaviour).
 #define LIA_PIN_BMS 15
 
-// TP4056 charger status, open-drain active-low.
+// TP4056 charger status. CHG is open-drain active-low; STBY reads
+// active-HIGH on real hardware (see firmware/board/README.md "Open questions").
 #define LIA_PIN_CHG 1
 #define LIA_PIN_STBY 2
 
-// Status LED, RED channel only. Common-anode: LOW at the pin lights it.
+// Status LED, RED channel only. Lights when driven HIGH (confirmed on real
+// hardware 2026-07-22 -- see firmware/board/README.md "Open questions").
 #define LIA_PIN_LED_RED 40
 
 // -----------------------------------------------------------------------------
