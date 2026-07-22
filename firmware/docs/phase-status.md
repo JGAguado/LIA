@@ -303,8 +303,16 @@ unconfirmed assumption (`board/README.md` "Open questions"). `isCharging()`'s
 - **Charging/charge-complete messages confirmed correct by the user**
   (2026-07-22) after a live physical test on real hardware -- both the
   `"Charging"` and `"Device charged"` messages arrived at the target node as
-  expected. This is the first real confirmation of the `STBY`-HIGH polarity
-  flip; no counter-evidence, so it stands as correct going forward.
+  expected.
+- **`STBY` polarity correction, later the same day**: the user provided the
+  actual TP4056/board wiring detail -- `STBY` is pulled HIGH by an external
+  resistor while charging and pulled LOW by an internal N-MOSFET once
+  charging completes (mirroring `CHG`'s own active-low-while-charging
+  behavior, just on the opposite event). This means the active-HIGH read
+  above was backwards despite passing the live test (likely because that
+  test's charge-complete state happened to coincide with conditions where
+  either polarity would have produced a plausible-looking result). Flipped
+  `isChargeComplete()` back to `STBY == LOW` to match the real wiring.
 - **RED LED polarity bug found and fixed** (2026-07-22), also surfaced during
   this phase's live testing: `LiaBoard::setRedLed()` assumed common-anode
   wiring (channel lights when driven LOW) and inverted its duty cycle

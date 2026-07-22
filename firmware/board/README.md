@@ -15,7 +15,7 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 | `enablePeripherals()` / `disablePeripherals()` | `LIA_PIN_PPC` (GPIO21) | Gates power to the SX1262 and SAM-M10Q. Must be enabled before either is touched. |
 | `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Active-high PWM, 0 = off / 255 = full brightness (see "Open questions"). |
 | `isCharging()` | `LIA_PIN_CHG` (GPIO1) | TP4056 `CHRG`, open-drain active-low. |
-| `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | True when `STBY` reads HIGH -- per explicit instruction (2026-07-22), see "Open questions" below. |
+| `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | True when `STBY` reads LOW -- pulled HIGH externally while charging, pulled LOW by an internal N-MOSFET on completion (confirmed 2026-07-22, see "Open questions" below). |
 | `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). |
 
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
@@ -68,12 +68,15 @@ global, per the "No globals" coding standard. It's driven from
   (Phase 6) as the authoritative source -- BMS HIGH is continuous/no-sleep,
   BMS LOW is the wake-every-minute sleep cycle. `MOD.md`'s opposite polarity
   ("BMS high = Tracker mode" = the sleepy behaviour) is not used.
-- **Charger status polarity.** `isCharging()` still assumes the TP4056's
-  `CHRG` is open-drain active-low (per its datasheet), read with the ESP32's
-  internal pull-up enabled. `isChargeComplete()`'s `STBY` polarity was
-  flipped to active-HIGH 2026-07-22 per explicit instruction, overriding the
-  earlier active-low datasheet assumption -- Phase 7's real-hardware charge
-  cycle is what actually confirms (or corrects) both of these.
+- ~~**Charger status polarity.**~~ Resolved 2026-07-22: `isCharging()` is
+  `CHG` active-low (an internal N-MOSFET pulls it low while charging;
+  external pull-up otherwise) -- matches the original datasheet assumption,
+  unchanged. `isChargeComplete()` is `STBY` active-low (external pull-up
+  holds it HIGH while charging; an internal N-MOSFET pulls it LOW on
+  completion) -- this briefly went through an incorrect active-HIGH flip
+  earlier in Phase 7 (per an instruction that didn't match the actual
+  wiring) before being corrected back to active-low against the real board
+  behaviour.
 - **GPS fix-wait timeout for the BMS-low sleep cycle** (`TrackerService.h`'s
   `kFixWaitTimeoutMs`, currently 90s) is a real tradeoff (battery vs. fresh
   position) not yet validated against actual cold/warm-fix timing outdoors --

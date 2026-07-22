@@ -241,8 +241,10 @@ target node (see "Target Node"), on the same private channel TrackerService
 uses (`ChannelLookup`/`MeshTargets.h`):
 - Send `"Charging"` when CHG is detected (edge-triggered, once per
   charging-session start).
-- Send `"Device charged"` when STBY reads HIGH (edge-triggered, once per
-  completion).
+- Send `"Device charged"` when STBY reads LOW (edge-triggered, once per
+  completion) -- STBY is pulled HIGH externally while charging and pulled
+  LOW by an internal N-MOSFET on completion; an initial active-HIGH reading
+  of this instruction was corrected 2026-07-22 against the actual wiring.
 
 User Validation:
 - Verify "Charging" message arrives when a charger is connected.

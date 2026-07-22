@@ -50,10 +50,11 @@ class LiaBoard
     /// TP4056 CHRG output (open-drain, active low): true while charging.
     bool isCharging() const;
 
-    /// TP4056 STBY: true (HIGH) once charge is complete, per explicit
-    /// instruction (2026-07-22) that supersedes the earlier open-drain
-    /// active-low datasheet assumption -- Phase 7 is where this polarity gets
-    /// checked against real hardware.
+    /// TP4056 STBY: true (LOW) once charge is complete. STBY is pulled HIGH
+    /// by an external resistor while charging and pulled LOW by an internal
+    /// N-channel MOSFET on completion -- confirmed against the actual board
+    /// wiring (2026-07-22), which briefly had this inverted mid-Phase-7
+    /// before the wiring was clarified.
     bool isChargeComplete() const;
 
     /// BMS switch reading. Per firmware/AGENTS.md (the authoritative source --
