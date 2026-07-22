@@ -1,5 +1,19 @@
 # Services
 
+## Battery gauge (lia_v2 only)
+
+No LIA-specific service needed: `lia_v2/variant.h` defines `I2C_SDA`/
+`I2C_SCL`, which is all stock Meshtastic requires to enable the MAX17048
+battery gauge -- `src/main.cpp` calls `Wire.begin(I2C_SDA, I2C_SCL)` and runs
+`i2cScanner->scanPort()` whenever `I2C_SDA` is defined; `ScanI2CTwoWire.cpp`
+already recognizes the MAX17048 at its fixed I2C address and registers
+`MAX17048Sensor`, which then reports battery voltage/percentage through
+Meshtastic's normal `PowerTelemetry`/`DeviceTelemetry` path -- the same
+mechanism any stock Meshtastic board with this gauge uses. `lia_v1` cannot
+do this: the LSM6DSOXTR IMU that's present there caused signal errors on the
+shared I2C line, so `lia_v1/variant.h` deliberately leaves `I2C_SDA`/
+`I2C_SCL` undefined (see `board/README.md`).
+
 ## MeshTargets.h / ChannelLookup
 
 Shared configuration used by every service that reports to the configured

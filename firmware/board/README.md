@@ -21,14 +21,28 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
 stock Meshtastic, driven by the pin `#define`s in
 [`variant.h`](../meshtastic/variants/esp32s3/lia_v1/variant.h)), and never
-touches I2C or the green/blue LED channels -- both are unavailable on the
-current PCB revision (see `firmware/AGENTS.md` "Hardware Constraints").
+touches I2C or the green/blue LED channels -- unavailable on `lia_v1` (see
+`firmware/AGENTS.md` "Hardware Constraints").
+
+`lia_v2` (2026-07-22) is the exception: the LSM6DSOXTR IMU has been removed
+from the board (it was causing signal errors on the shared I2C line), which
+frees the bus for the MAX17048 battery gauge --
+[`variant.h`](../meshtastic/variants/esp32s3/lia_v2/variant.h) defines
+`I2C_SDA`/`I2C_SCL` (GPIO4/5). `LiaBoard` still doesn't touch it: Meshtastic's
+stock `Wire.begin()` + `ScanI2C` (`src/main.cpp`,
+`src/detect/ScanI2CTwoWire.cpp`) already detects the MAX17048 at its fixed
+address and wires up `MAX17048Sensor` automatically once those macros are
+defined, so no LIA-specific code is needed for the gauge -- see
+`firmware/services/README.md`.
 
 ## Wiring into Meshtastic
 
 `LiaBoard` is a Meyer's singleton (`LiaBoard::instance()`) rather than a
 global, per the "No globals" coding standard. It's driven from
-[`extra_variants/lia_v1/variant.cpp`](../meshtastic/extra_variants/lia_v1/variant.cpp):
+[`extra_variants/lia_v1/variant.cpp`](../meshtastic/extra_variants/lia_v1/variant.cpp)
+(`lia_v2/variant.cpp` is identical apart from its `#ifdef` guard --
+`LiaBoard`/`TrackerService`/`ChargeStatusService` are all pin-driven via
+`variant.h` macros, not hardcoded to one revision):
 
 - `earlyInitVariant()` calls `begin()` then `enablePeripherals()`. This runs
   *before* `initSPI()` and before Meshtastic's own radio/GPS init (which

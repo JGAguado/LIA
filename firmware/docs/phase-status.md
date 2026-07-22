@@ -362,3 +362,46 @@ available proxy for "USB connected."
   toggle CHG) a few seconds into the sleep window and confirm the reported
   wake cause (`ext0 RTC_IO` vs `ext1 RTC_CNTL` vs `timer`, per
   `sleep.cpp::initDeepSleep()`'s logging) and that it happens well under 60s.
+
+## lia_v2 hardware variant (2026-07-22)
+
+New board revision: the LSM6DSOXTR IMU has been physically removed (it was
+causing signal errors on the shared I2C line), freeing the bus for the
+MAX17048 battery gauge. New `lia_v2` PlatformIO environment (`boards/lia_v2.json`,
+`variants/esp32s3/lia_v2/`, `extra_variants/lia_v2/variant.cpp`) mirrors
+`lia_v1` in every respect except defining `I2C_SDA`/`I2C_SCL` (GPIO4/5) --
+`LiaBoard`/`TrackerService`/`ChargeStatusService` are reused unchanged, since
+none of them are hardcoded to a specific variant. `firmware/tools/build.ps1`
+gained a `-Variant` parameter (`lia_v1` default, or `lia_v2`) so both boards
+build from the same script.
+
+No LIA-specific code needed for the battery gauge: Meshtastic's stock
+`Wire.begin(I2C_SDA, I2C_SCL)` + `i2cScanner->scanPort()` (`src/main.cpp`)
+already detects the MAX17048 at its fixed address and registers
+`MAX17048Sensor` automatically once those macros are defined.
+
+- Compiled clean for `lia_v2` (separate from `lia_v1`, no symbol conflicts --
+  confirmed both variants' `extra_variants/*/variant.cpp` files coexist
+  safely in the same shared Meshtastic checkout: each is guarded by its own
+  `#ifdef _VARIANT_LIA_V1` / `_VARIANT_LIA_V2`, which only evaluates true
+  when built against its own `variant.h`, so the other's guard is always
+  false and compiles to an empty translation unit).
+- Flashed to the actual v2 board -- required identifying the correct COM
+  port first (initially assumed COM4, actually COM6; the two connected
+  boards' USB descriptors were briefly indistinguishable while both showed
+  "Unknown" device status, resolved by checking which port recovered after
+  a targeted replug).
+- **Confirmed on real hardware**: a boot capture (with the serial port
+  opened in a retry loop so it grabbed the connection at the exact moment a
+  reset occurred, catching truly-early boot output) shows:
+  ```
+  Scan for i2c devices
+  MAX17048 found at address 0x36
+  1 I2C devices found
+  ```
+  No crash. This confirms the IMU's removal did leave a clean I2C bus and
+  the gauge is detected exactly as stock Meshtastic's existing MAX17048
+  support expects, with zero LIA-specific code required.
+- Not yet done: reading the gauge's actual telemetry output (voltage/percent)
+  from the mesh to confirm it reports sensible values, and comparing against
+  a known charge state.

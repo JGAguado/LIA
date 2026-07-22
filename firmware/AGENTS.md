@@ -23,6 +23,15 @@ Current PCB revision limitations:
 
 These peripherals SHALL NOT be initialized nor referenced.
 
+**This section describes `lia_v1` only.** A second hardware revision,
+`lia_v2` (2026-07-22), removes the LSM6DSOXTR IMU (it was causing signal
+errors on the shared I2C line) and enables I2C for the MAX17048 battery
+gauge -- see `firmware/meshtastic/variants/esp32s3/lia_v2/variant.h` and
+`firmware/board/README.md`. Everything else in this document (pinout,
+architecture, phases) applies equally to both revisions unless noted
+otherwise; build either with `firmware/tools/build.ps1 -Variant lia_v1` or
+`-Variant lia_v2` (defaults to `lia_v1`).
+
 ## Functional Hardware
 
 > **Module pin ≠ GPIO number.** The table below is silicon GPIO numbers, not
