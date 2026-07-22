@@ -16,13 +16,23 @@
 /// message while its condition stays asserted.
 ///
 /// Construct once from lateInitVariant(): `new ChargeStatusService();`.
-/// Nothing needs to reference the instance afterwards -- MeshModule/OSThread
-/// both self-register on construction -- so no global pointer is kept (see
-/// firmware/AGENTS.md "No globals").
+/// CommandService (constructed afterwards) reaches this one instance via
+/// instance() to act on CHG_ON/CHG_OFF/STB_ON/STB_OFF commands -- a
+/// self-registering static pointer set in the constructor, the same pattern
+/// Meshtastic's own globals (nodeDB, service, screen, ...) use, rather than
+/// a lazily-constructed Meyer's singleton like LiaBoard: this object's
+/// construction time matters (it must happen from lateInitVariant(), for
+/// the same MeshModule/OSThread self-registration ordering reasons as
+/// TrackerService), so it can't be created on first access.
 class ChargeStatusService : public SinglePortModule, private concurrency::OSThread
 {
   public:
     ChargeStatusService();
+
+    static ChargeStatusService *instance() { return instance_; }
+
+    void setChargingNotificationsEnabled(bool enabled) { chargingNotificationsEnabled_ = enabled; }
+    void setChargeCompleteNotificationsEnabled(bool enabled) { chargeCompleteNotificationsEnabled_ = enabled; }
 
   protected:
     int32_t runOnce() override;
@@ -34,4 +44,8 @@ class ChargeStatusService : public SinglePortModule, private concurrency::OSThre
 
     bool wasCharging_ = false;
     bool wasChargeComplete_ = false;
+    bool chargingNotificationsEnabled_ = true;
+    bool chargeCompleteNotificationsEnabled_ = true;
+
+    static ChargeStatusService *instance_;
 };

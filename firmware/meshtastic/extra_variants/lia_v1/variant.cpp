@@ -23,6 +23,7 @@ void earlyInitVariant()
 }
 
 #include "lia/services/ChargeStatusService.h"
+#include "lia/services/CommandService.h"
 #include "lia/services/TrackerService.h"
 
 void lateInitVariant()
@@ -39,6 +40,9 @@ void lateInitVariant()
 
     new TrackerService();
     new ChargeStatusService();
+    // Must come after ChargeStatusService: CommandService reaches it via
+    // ChargeStatusService::instance() to act on CHG_ON/OFF and STB_ON/OFF.
+    new CommandService();
 }
 
 // Weak-overridden per firmware/main-esp32.cpp's cpuDeepSleep(): called right

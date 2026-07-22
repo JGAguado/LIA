@@ -58,6 +58,8 @@ $LiaSrcDest = Join-Path $CheckoutPath "src\lia"
 New-Item -ItemType Directory -Force $LiaSrcDest | Out-Null
 Copy-Item (Join-Path $FirmwareDir "board\*.h") $LiaSrcDest -Force
 Copy-Item (Join-Path $FirmwareDir "board\*.cpp") $LiaSrcDest -Force
+Copy-Item (Join-Path $FirmwareDir "drivers\*.h") $LiaSrcDest -Force -ErrorAction SilentlyContinue
+Copy-Item (Join-Path $FirmwareDir "drivers\*.cpp") $LiaSrcDest -Force -ErrorAction SilentlyContinue
 
 $ServicesSrcDest = Join-Path $CheckoutPath "src\lia\services"
 New-Item -ItemType Directory -Force $ServicesSrcDest | Out-Null

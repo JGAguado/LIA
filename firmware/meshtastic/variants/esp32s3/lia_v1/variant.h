@@ -62,6 +62,13 @@
 #define I2C_SDA 4
 #define I2C_SCL 5
 
+// IMU (LSM6DSOXTR) wake-up interrupt. Meshtastic's stock AccelerometerThread
+// never drives this sensor -- ScanI2C resolves its WHO_AM_I (0x6C) to the
+// QMI8658 device type, which AccelerometerThread has no case for -- so
+// CommandService talks to it directly via ImuMotionDriver instead. See
+// firmware/board/README.md "Open questions".
+#define LIA_PIN_IMU_INT 6
+
 // -----------------------------------------------------------------------------
 // LIA-specific pins, owned exclusively by LiaBoard (firmware/board/LiaBoard.*)
 // -- not stock Meshtastic features, so no upstream macro exists for them.

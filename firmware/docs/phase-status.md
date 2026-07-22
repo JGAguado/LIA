@@ -398,6 +398,57 @@ required (same mechanism as `lia_v2`, see `services/README.md`).
   common register-compatible 6-axis IMUs at this address) -- the physical
   part is still the LSM6DSOXTR, just surfaced under Meshtastic's own device
   labelling for that chip ID.
-- Not yet done: reading either sensor's actual telemetry output (gauge
-  voltage/percent, IMU accel/gyro) from the mesh to confirm real data, not
-  just presence detection.
+- Not yet done at the time: reading either sensor's actual telemetry output
+  (gauge voltage/percent, IMU accel/gyro) from the mesh to confirm real
+  data, not just presence detection -- see `CommandService` below, which
+  does exactly this via `GPS`/`BATTERY`/`IMU_ON`.
+
+## CommandService (2026-07-22, lia_v1 only)
+
+Added text-command handling per explicit instruction: `GPS`, `BATTERY`,
+`IMU_ON`/`IMU_OFF`, `CHG_ON`/`CHG_OFF`, `STB_ON`/`STB_OFF`, `HELP` -- see
+`services/README.md` "CommandService" for the full behaviour table. Also
+added `ImuMotionDriver` (`drivers/ImuMotionDriver.*`), talking to the
+LSM6DSOXTR directly via `Adafruit_LSM6DSOX` (bypassing Meshtastic's own
+`AccelerometerThread`, which has no case for the `QMI8658` device type
+`ScanI2C` resolves this chip to -- see `services/README.md` "Battery gauge +
+IMU").
+
+- Build succeeded clean and flashed successfully to COM4.
+- **First real-hardware test surfaced a routing bug, fixed and reflashed**:
+  commands sent as a broadcast on the "Test" channel worked immediately
+  (`HELP` got the correct reply), but commands sent as a direct message
+  through the app were silently dropped. Root cause: DMs sent through the
+  official app are commonly PKI-encrypted, which bypasses the channel/PSK
+  system entirely and reports `channel=0` regardless of which channel was
+  open -- the original channel-only gate rejected these. Fixed by also
+  accepting any packet addressed directly to us (`mp.to ==
+  nodeDB->getNodeNum()`), regardless of channel.
+- **Second issue found via the same testing**: `BATTERY` initially replied
+  "Battery: 101%" -- the "no battery, external power" fallback value,
+  despite the gauge being genuinely present and detected. Root cause:
+  `Power::setup()`'s own battery-source detection runs *before* `main.cpp`'s
+  I2C scan populates the sensor map that detection depends on, so it always
+  sees "not ready yet" and never gets corrected later. Fixed by having
+  `CommandService` read the `Adafruit_MAX1704X` gauge directly instead of
+  going through `powerStatus`.
+- **Confirmed on real hardware after both fixes**, exercising every command
+  except `IMU_OFF`/`STB_ON` (simple mirrors of already-tested siblings on
+  the same dispatch ladder, not independently re-verified):
+  ```
+  Command: sent "Commands: GPS, BATTERY, IMU_ON, IMU_OFF, CHG_ON, CHG_OFF, STB_ON, STB_OFF, HELP" to 0xdce6d663 on channel 1
+  Command: sent "No GPS fix yet" to 0xdce6d663 on channel 0
+  Command: sent "IMU activity detection ON" to 0xdce6d663 on channel 0
+  Command: sent "Charging notifications ON" to 0xdce6d663 on channel 0
+  Command: sent "Charging notifications OFF" to 0xdce6d663 on channel 0
+  Command: sent "Charge-complete notifications OFF" to 0xdce6d663 on channel 0
+  Command: sent "Battery: 1%" to 0xdce6d663 on channel 0
+  ```
+  Case-insensitive matching confirmed (`chg_off`, `Stb_off` both worked);
+  an unrecognized near-miss (`Stb off`, a typo with a space instead of an
+  underscore) was correctly silently ignored rather than misfiring. No
+  crash across the whole test.
+- Not yet done: a real motion event actually triggering "Activity detected"
+  (IMU_ON's interrupt path was armed successfully, but no physical shake/tap
+  test was performed), and confirming the BMS-wake/USB-wake early-wake
+  timing still pending from Phase 8.

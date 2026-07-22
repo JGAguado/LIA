@@ -7,9 +7,12 @@
 
 #include <cstring>
 
+ChargeStatusService *ChargeStatusService::instance_ = nullptr;
+
 ChargeStatusService::ChargeStatusService()
     : SinglePortModule("ChargeStatus", meshtastic_PortNum_TEXT_MESSAGE_APP), concurrency::OSThread("ChargeStatus")
 {
+    instance_ = this;
 }
 
 int32_t ChargeStatusService::runOnce()
@@ -17,9 +20,12 @@ int32_t ChargeStatusService::runOnce()
     const bool charging = LiaBoard::instance().isCharging();
     const bool chargeComplete = LiaBoard::instance().isChargeComplete();
 
-    if (charging && !wasCharging_)
+    // Edge state is tracked regardless of whether notifications are
+    // currently enabled, so re-enabling mid-condition doesn't immediately
+    // re-fire for a transition that already happened.
+    if (charging && !wasCharging_ && chargingNotificationsEnabled_)
         sendText("Charging");
-    if (chargeComplete && !wasChargeComplete_)
+    if (chargeComplete && !wasChargeComplete_ && chargeCompleteNotificationsEnabled_)
         sendText("Device charged");
 
     wasCharging_ = charging;

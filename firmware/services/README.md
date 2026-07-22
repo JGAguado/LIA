@@ -2,17 +2,32 @@
 
 ## Battery gauge + IMU (I2C)
 
-No LIA-specific service needed: `variant.h` defines `I2C_SDA`/`I2C_SCL`,
-which is all stock Meshtastic requires -- `src/main.cpp` calls
-`Wire.begin(I2C_SDA, I2C_SCL)` and runs `i2cScanner->scanPort()` whenever
-`I2C_SDA` is defined; `ScanI2CTwoWire.cpp` already recognizes both the
-MAX17048 battery gauge and the LSM6DSOXTR IMU at their fixed I2C addresses
-and registers `MAX17048Sensor`/`LSM6DS3Sensor`, which then report through
-Meshtastic's normal `PowerTelemetry`/`DeviceTelemetry` and motion-sensor
-paths -- the same mechanism any stock Meshtastic board with these parts
-uses. This only works because of a solder rework crossing SDA/SCL back on
-the IMU's connection (2026-07-22) -- see `board/README.md` "Open questions"
-for why the bus was unusable before that.
+`variant.h` defines `I2C_SDA`/`I2C_SCL`, which is enough for stock
+Meshtastic's `Wire.begin(I2C_SDA, I2C_SCL)` + `i2cScanner->scanPort()`
+(`src/main.cpp`) to detect both parts at boot -- confirmed via the boot log
+(`MAX17048 found at address 0x36`, `QMI8658 found at address 0x6b`, `2 I2C
+devices found`). This only works because of a solder rework crossing
+SDA/SCL back on the IMU's connection (2026-07-22) -- see `board/README.md`
+"Open questions" for why the bus was unusable before that.
+
+Detection stops there for the IMU, though: `ScanI2CTwoWire` resolves the
+LSM6DSOXTR's `WHO_AM_I` (0x6C) to its `QMI8658` device type, and
+`AccelerometerThread` (`motion/AccelerometerThread.h`) has no `case` for
+that type at all -- it silently falls through to `disable()`. So unlike the
+gauge, stock Meshtastic never actually drives this IMU. `CommandService`'s
+`ImuMotionDriver` (`drivers/ImuMotionDriver.*`) talks to it directly instead,
+via `Adafruit_LSM6DSOX` (0x6C matches that class's expected chip ID exactly,
+unlike the `Adafruit_LSM6DS3TRC` class Meshtastic's own `LSM6DS3Sensor.cpp`
+uses for a different chip ID).
+
+Similarly, `CommandService`'s `BATTERY` command reads the `Adafruit_MAX1704X`
+gauge directly rather than through `powerStatus->getBatteryChargePercent()`:
+`Power::setup()` runs its own battery-source detection *before* `main.cpp`'s
+I2C scan populates the sensor map that detection depends on, so it always
+sees "not ready yet" at boot and locks in a 101% ("no battery, external
+power") fallback that never gets corrected later -- confirmed on real
+hardware (2026-07-22), even though the gauge is genuinely present and
+working.
 
 ## MeshTargets.h / ChannelLookup
 
@@ -104,3 +119,50 @@ corrected back against the real board behaviour.
 
 Constructed once from `lateInitVariant()` (`new ChargeStatusService();`) --
 same self-registration pattern as `TrackerService`, no global pointer kept.
+
+## CommandService (lia_v1 only)
+
+Responds to short text commands, per explicit instruction (2026-07-22).
+`lia_v1` only: `IMU_ON`/`IMU_OFF` need the physical LSM6DSOXTR IMU that
+`lia_v2` removed.
+
+Accepts a command if it arrives **either** as a broadcast/DM on the private
+`kLiaChannelName` channel (fail-closed, same reasoning as `TrackerService`/
+`ChargeStatusService`), **or** as a direct message addressed to us
+specifically (`mp.to == nodeDB->getNodeNum()`), regardless of channel. The
+second case matters in practice: a DM sent through the official app is
+commonly PKI-encrypted, which bypasses the channel/PSK system entirely and
+reports `channel=0` no matter which channel was open when it was sent --
+confirmed on real hardware (2026-07-22), a channel-only check silently
+dropped DM-sent commands (`Ch=0x0 ... PKI` in the log) until this was added.
+Being addressed directly to our node already requires the sender to
+know/have paired with us, and PKI authenticates to their actual identity
+key, so accepting DMs isn't a weaker bar than channel-PSK possession.
+
+Commands (case-insensitive; unrecognized text is silently ignored, since
+this channel may carry normal chat too):
+
+| Command | Behaviour |
+| --- | --- |
+| `GPS` | Replies with the current `localPosition` lat/lon, or "No GPS fix yet". |
+| `BATTERY` | Replies with the MAX17048's charge percentage (see "Battery gauge + IMU" above for why this reads the gauge directly). |
+| `IMU_ON` | Starts `ImuMotionDriver` (begin()s the sensor + arms its GPIO interrupt on first use) and polls it every 250ms; sends "Activity detected" once per motion event, addressed to `kLiaTargetNode` on the private channel (same destination `TrackerService`/`ChargeStatusService` use, not a reply to whoever sent `IMU_ON`). |
+| `IMU_OFF` | Detaches the interrupt; stops polling. |
+| `CHG_ON` / `CHG_OFF` | Toggles `ChargeStatusService::instance()->setChargingNotificationsEnabled()`. |
+| `STB_ON` / `STB_OFF` | Toggles `ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled()`. |
+| `HELP` | Replies with the command list. |
+
+Replies to a command go back as a DM to whoever sent it, on the channel the
+request arrived on (`isPromiscuous = true`, so both DMs and broadcasts on
+the private channel are seen).
+
+`ChargeStatusService::instance()` is a self-registering static pointer set
+in that class's own constructor (not a lazily-constructed Meyer's singleton
+like `LiaBoard`, since its construction *timing* matters -- it must happen
+from `lateInitVariant()`, same MeshModule/OSThread self-registration
+ordering reasons as `TrackerService`) -- the same pattern Meshtastic's own
+globals (`nodeDB`, `service`, `screen`, ...) already use.
+
+Constructed once from `lateInitVariant()`, after `ChargeStatusService`
+(`new CommandService();`) -- no global pointer kept, nothing else needs to
+reach this one.
