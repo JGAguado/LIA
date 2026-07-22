@@ -83,11 +83,10 @@ once when `isCharging()` goes false->true, `"Device charged"` once when
 `isChargeComplete()` goes false->true. Neither message repeats while its
 condition stays asserted.
 
-`isChargeComplete()`'s `STBY` polarity was flipped to active-HIGH
-2026-07-22 per explicit instruction (see `board/README.md` "Open
-questions") -- this is the real-hardware charge cycle that actually confirms
-or corrects both `CHG` and `STBY` polarity assumptions, since neither had
-been validated against real hardware before this phase.
+`isChargeComplete()`'s `STBY` read is active-low (see `board/README.md`
+"Open questions" for the actual pull-up/N-MOSFET wiring) -- it briefly went
+through an incorrect active-HIGH flip earlier in this phase before being
+corrected back against the real board behaviour.
 
 Constructed once from `lateInitVariant()` (`new ChargeStatusService();`) --
 same self-registration pattern as `TrackerService`, no global pointer kept.

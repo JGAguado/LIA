@@ -58,8 +58,9 @@
 // Beacon Mode Selector switch (see firmware/AGENTS.md Phase 6 for behaviour).
 #define LIA_PIN_BMS 15
 
-// TP4056 charger status. CHG is open-drain active-low; STBY reads
-// active-HIGH on real hardware (see firmware/board/README.md "Open questions").
+// TP4056 charger status, both active-low: CHG via an internal N-MOSFET
+// while charging, STBY via an internal N-MOSFET on completion (external
+// pull-ups otherwise) -- see firmware/board/README.md "Open questions".
 #define LIA_PIN_CHG 1
 #define LIA_PIN_STBY 2
 
