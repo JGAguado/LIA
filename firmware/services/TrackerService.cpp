@@ -8,14 +8,24 @@
 #include "lia/LiaBoard.h"
 #include "sleep.h"
 
+TrackerService *TrackerService::instance_ = nullptr;
+
 TrackerService::TrackerService() : SinglePortModule("Tracker", meshtastic_PortNum_POSITION_APP), concurrency::OSThread("Tracker")
 {
+    instance_ = this;
+}
+
+void TrackerService::setManualLed(bool on)
+{
+    ledManualOverride_ = true;
+    LiaBoard::instance().setRedLed(on ? 255 : 0);
 }
 
 int32_t TrackerService::runOnce()
 {
     const bool continuous = LiaBoard::instance().isBmsHigh();
-    LiaBoard::instance().setRedLed(continuous ? 255 : 0);
+    if (!ledManualOverride_)
+        LiaBoard::instance().setRedLed(continuous ? 255 : 0);
 
     // Scheduled last cycle, after sending: the packet has had a few seconds
     // to actually get on air, so it's safe to cut power and sleep now. This

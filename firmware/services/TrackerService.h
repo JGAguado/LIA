@@ -21,13 +21,24 @@
 /// AGENTS.md (2026-07-19) -- MOD.md's polarity is not used.
 ///
 /// Construct once from lateInitVariant() (after the radio is initialized):
-/// `new TrackerService();`. Nothing needs to reference the instance
-/// afterwards -- MeshModule/OSThread both self-register on construction --
-/// so no global pointer is kept (see firmware/AGENTS.md "No globals").
+/// `new TrackerService();`. CommandService (lia_v1 only, constructed later)
+/// reaches this one instance via instance() to act on LED_ON/LED_OFF -- a
+/// self-registering static pointer set in the constructor, same pattern as
+/// ChargeStatusService::instance() (see that class for why this isn't a
+/// lazily-constructed Meyer's singleton like LiaBoard).
 class TrackerService : public SinglePortModule, private concurrency::OSThread
 {
   public:
     TrackerService();
+
+    static TrackerService *instance() { return instance_; }
+
+    /// Manual RED LED override, per explicit instruction (2026-07-24):
+    /// once set, runOnce() stops driving the LED from BMS state on its own
+    /// -- there is no "back to automatic" command, so this is a one-way
+    /// switch for the lifetime of this boot (a fresh boot, e.g. after the
+    /// BMS-LOW sleep cycle's reboot, starts back in automatic mode).
+    void setManualLed(bool on);
 
   protected:
     int32_t runOnce() override;
@@ -48,4 +59,7 @@ class TrackerService : public SinglePortModule, private concurrency::OSThread
 
     const uint32_t bootMs_ = millis();
     bool sleepOnNextExecution_ = false;
+    bool ledManualOverride_ = false;
+
+    static TrackerService *instance_;
 };

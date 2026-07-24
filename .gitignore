@@ -1,0 +1,29 @@
+# Website (Astro/Starlight/Node)
+website/node_modules/
+website/dist/
+website/.astro/
+node_modules/
+
+# Mirrored at dev/build time from hardware/ and enclosure/ (see astro.config.mjs) — not a source of truth.
+website/public/generated/
+
+# Enclosure: native CAD source files are large/proprietary and not committed.
+# STEP/STL exports and renders under enclosure/ are still tracked.
+enclosure/cad/
+
+# KiCad autosave / version-history backups (not deliverables)
+**/*-backups/
+**/production/backups/
+*.kicad_sch-bak
+*.kicad_pcb-bak
+
+# References
+hardware/schematics/references/
+
+# PlatformIO build artifacts / fetched libraries (firmware/tools/*/ standalone projects)
+.pio/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini

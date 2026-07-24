@@ -78,6 +78,15 @@ Behaviour switches on `LiaBoard::instance().isBmsHigh()` (Phase 6):
   (90s) for a fix before giving up on the cycle and sleeping anyway, rather
   than hunting indefinitely and draining the battery.
 
+### Manual LED override
+
+`setManualLed(bool on)` (reached via `TrackerService::instance()`, used by
+`CommandService`'s `LED_ON`/`LED_OFF`) sets the LED immediately and a
+one-way flag that makes `runOnce()` stop driving it from BMS state from then
+on. There is no "back to automatic" command -- a fresh boot (e.g. after the
+BMS-LOW sleep cycle's reboot) starts back in automatic mode, since the flag
+isn't persisted.
+
 Requires the device to be configured with `device.role = TRACKER` (not the
 default) for the sleep behaviour to work as intended -- confirmed against
 `PowerFSM.cpp` and `sleep.cpp`: stock Meshtastic only auto-adds its own
@@ -150,19 +159,35 @@ this channel may carry normal chat too):
 | `IMU_OFF` | Detaches the interrupt; stops polling. |
 | `CHG_ON` / `CHG_OFF` | Toggles `ChargeStatusService::instance()->setChargingNotificationsEnabled()`. |
 | `STB_ON` / `STB_OFF` | Toggles `ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled()`. |
+| `LED_ON` / `LED_OFF` | Calls `TrackerService::instance()->setManualLed()` -- see `TrackerService`'s own doc below for the one-way-override caveat. |
 | `HELP` | Replies with the command list. |
 
 Replies to a command go back as a DM to whoever sent it, on the channel the
 request arrived on (`isPromiscuous = true`, so both DMs and broadcasts on
 the private channel are seen).
 
-`ChargeStatusService::instance()` is a self-registering static pointer set
-in that class's own constructor (not a lazily-constructed Meyer's singleton
-like `LiaBoard`, since its construction *timing* matters -- it must happen
-from `lateInitVariant()`, same MeshModule/OSThread self-registration
-ordering reasons as `TrackerService`) -- the same pattern Meshtastic's own
-globals (`nodeDB`, `service`, `screen`, ...) already use.
+`ChargeStatusService::instance()`/`TrackerService::instance()` are
+self-registering static pointers set in each class's own constructor (not a
+lazily-constructed Meyer's singleton like `LiaBoard`, since their
+construction *timing* matters -- both must happen from `lateInitVariant()`,
+in a specific order (`TrackerService`, then `ChargeStatusService`, then
+`CommandService`) -- the same pattern Meshtastic's own globals (`nodeDB`,
+`service`, `screen`, ...) already use.
 
-Constructed once from `lateInitVariant()`, after `ChargeStatusService`
-(`new CommandService();`) -- no global pointer kept, nothing else needs to
-reach this one.
+Constructed once from `lateInitVariant()`, after `TrackerService` and
+`ChargeStatusService` (`new CommandService();`) -- no global pointer kept,
+nothing else needs to reach this one.
+
+### Battery gauge reading confirmed correct (2026-07-24)
+
+`BATTERY` kept reporting ~0-1% even after the no-reset fix above. Built a
+standalone `firmware/tools/battery_test/` project (no Meshtastic -- see its
+README) to compare the no-reset raw register read against the stock
+`Adafruit_MAX17048` library side by side, isolated from any
+Meshtastic-specific interaction. Both paths agreed exactly and neither
+improved over ~28s of samples (ruling out "just needs time to reconverge
+after reset"), while `VCELL` read a stable ~2.95-2.96V -- confirmed
+independently with a multimeter at ~3.0V, within normal measurement
+tolerance. A LiPo cell at ~3.0V is close to a typical low-voltage cutoff, so
+a near-0% state of charge is a genuinely correct reading, not a bug -- no
+further code change was needed.

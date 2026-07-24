@@ -40,8 +40,9 @@ void lateInitVariant()
 
     new TrackerService();
     new ChargeStatusService();
-    // Must come after ChargeStatusService: CommandService reaches it via
-    // ChargeStatusService::instance() to act on CHG_ON/OFF and STB_ON/OFF.
+    // Must come after both: CommandService reaches them via
+    // TrackerService::instance() (LED_ON/OFF) and
+    // ChargeStatusService::instance() (CHG_ON/OFF, STB_ON/OFF).
     new CommandService();
 }
 

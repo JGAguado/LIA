@@ -452,3 +452,21 @@ IMU").
   (IMU_ON's interrupt path was armed successfully, but no physical shake/tap
   test was performed), and confirming the BMS-wake/USB-wake early-wake
   timing still pending from Phase 8.
+- **`LED_ON`/`LED_OFF` added** (2026-07-24) per explicit instruction:
+  `TrackerService::setManualLed()` (reached via a new `instance()`, same
+  self-registering-static-pointer pattern as `ChargeStatusService`) sets a
+  one-way override flag so `runOnce()` stops driving the LED from BMS state
+  once a manual command has been sent -- confirmed working on real hardware.
+- **`BATTERY` still read ~0%-1% after the earlier no-reset fix -- turned out
+  to be a correct reading, not a bug.** Built a standalone
+  `firmware/tools/battery_test/` project (no Meshtastic) to compare the
+  no-reset raw register read against the stock `Adafruit_MAX17048` library
+  side by side, isolated from any Meshtastic-specific interaction. Both
+  paths agreed exactly and neither improved over ~28s of samples (ruling
+  out "just needs time to reconverge after reset"), while `VCELL` read a
+  stable, plausible ~2.95-2.96V -- confirmed independently with a
+  multimeter at ~3.0V, well within normal measurement tolerance. A LiPo
+  cell at ~3.0V is close to typical low-voltage cutoff, so a near-0% state
+  of charge is a genuinely correct reading, not a stale/reset artifact --
+  no further code change was needed; the earlier fix already reads the
+  chip correctly.

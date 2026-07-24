@@ -5,6 +5,11 @@
 #include "MeshService.h"
 #include "MeshTargets.h"
 #include "NodeDB.h"
+#include "TrackerService.h"
+
+#include <Adafruit_BusIO_Register.h>
+#include <Adafruit_I2CDevice.h>
+#include <Adafruit_MAX1704X.h> // for the MAX17048_I2CADDR_DEFAULT / MAX1704X_SOC_REG constants only
 
 #include <cctype>
 #include <cstdio>
@@ -100,8 +105,17 @@ void CommandService::handleCommand(const meshtastic_MeshPacket &mp, const char *
         if (ChargeStatusService::instance())
             ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled(false);
         sendText(mp.from, mp.channel, "Charge-complete notifications OFF");
+    } else if (strcasecmp(command, "LED_ON") == 0) {
+        if (TrackerService::instance())
+            TrackerService::instance()->setManualLed(true);
+        sendText(mp.from, mp.channel, "LED ON");
+    } else if (strcasecmp(command, "LED_OFF") == 0) {
+        if (TrackerService::instance())
+            TrackerService::instance()->setManualLed(false);
+        sendText(mp.from, mp.channel, "LED OFF");
     } else if (strcasecmp(command, "HELP") == 0) {
-        sendText(mp.from, mp.channel, "Commands: GPS, BATTERY, IMU_ON, IMU_OFF, CHG_ON, CHG_OFF, STB_ON, STB_OFF, HELP");
+        sendText(mp.from, mp.channel,
+                 "Commands: GPS, BATTERY, IMU_ON, IMU_OFF, CHG_ON, CHG_OFF, STB_ON, STB_OFF, LED_ON, LED_OFF, HELP");
     }
     // Unrecognized text is silently ignored -- this channel may carry
     // normal chat too, not just commands.
@@ -119,13 +133,17 @@ int32_t CommandService::runOnce()
 
 int CommandService::batteryPercent()
 {
-    if (!gaugeBegun_)
-        gaugeBegun_ = gauge_.begin();
-
-    if (!gaugeBegun_)
+    Adafruit_I2CDevice dev(MAX17048_I2CADDR_DEFAULT, &Wire);
+    if (!dev.begin(false)) // false: skip the address-detect scan, already confirmed present at boot
         return -1;
 
-    float percent = gauge_.cellPercent();
+    // SOC register: 16-bit value, 1/256ths of a percent -- same read and
+    // scaling Adafruit_MAX17048::cellPercent() itself uses, just without
+    // going through begin()'s reset. A plain read, no chip reconfiguration.
+    Adafruit_BusIO_Register socReg(&dev, MAX1704X_SOC_REG, 2, MSBFIRST);
+    uint32_t raw = socReg.read();
+
+    float percent = raw / 256.0f;
     if (percent < 0)
         percent = 0;
     if (percent > 100)
