@@ -11553,7 +11553,7 @@
 			)
 		)
 	)
-	(global_label "SDA"
+	(global_label "SCL"
 		(shape input)
 		(at 261.62 30.48 0)
 		(fields_autoplaced yes)
@@ -12103,7 +12103,7 @@
 			)
 		)
 	)
-	(global_label "SCL"
+	(global_label "SDA"
 		(shape input)
 		(at 261.62 27.94 0)
 		(fields_autoplaced yes)
@@ -16739,7 +16739,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "MHS110CRGBCT"
 			(at 212.1217 100.33 90)
 			(effects
 				(font
@@ -17269,7 +17269,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "LSM6DSOXTR"
 			(at 226.06 22.86 0)
 			(effects
 				(font
@@ -17693,7 +17693,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "MHS110CRGBCT"
 			(at 212.1217 85.09 90)
 			(effects
 				(font
@@ -18303,7 +18303,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "7d72fa1c-1645-4e5a-bd65-101e09f1cbb7")
-		(property "Reference" "SCL1"
+		(property "Reference" "SDA1"
 			(at 254.508 18.542 0)
 			(effects
 				(font
@@ -18355,7 +18355,7 @@
 		(instances
 			(project "LIA"
 				(path "/2f540d84-795c-4606-8035-69185f828e9c"
-					(reference "SCL1")
+					(reference "SDA1")
 					(unit 1)
 				)
 			)
@@ -19586,7 +19586,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "90e0f14b-fc0f-4389-be6b-9893d363f0d7")
-		(property "Reference" "SDA1"
+		(property "Reference" "SCL1"
 			(at 259.588 18.542 0)
 			(effects
 				(font
@@ -19638,7 +19638,7 @@
 		(instances
 			(project "LIA"
 				(path "/2f540d84-795c-4606-8035-69185f828e9c"
-					(reference "SDA1")
+					(reference "SCL1")
 					(unit 1)
 				)
 			)
@@ -19729,7 +19729,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "MHS110CRGBCT"
 			(at 212.1217 69.85 90)
 			(effects
 				(font
@@ -20937,7 +20937,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "MHS110CRGBCT"
 			(at 212.1217 54.61 90)
 			(effects
 				(font
@@ -21686,7 +21686,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "SSSS223900"
 			(at 99.06 180.3399 0)
 			(effects
 				(font

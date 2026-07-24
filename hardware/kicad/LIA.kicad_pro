@@ -544,7 +544,7 @@
       "plot": "../Schematics/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "LIA.step",
+      "step": "../pcb/LIA.stl",
       "svg": "",
       "vrml": ""
     },
