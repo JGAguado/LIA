@@ -81,7 +81,7 @@ Behaviour switches on `LiaBoard::instance().isBmsHigh()` (Phase 6):
 ### Manual LED override
 
 `setManualLed(bool on)` (reached via `TrackerService::instance()`, used by
-`CommandService`'s `LED_ON`/`LED_OFF`) sets the LED immediately and a
+`CommandService`'s `LED ON`/`LED OFF`) sets the LED immediately and a
 one-way flag that makes `runOnce()` stop driving it from BMS state from then
 on. There is no "back to automatic" command -- a fresh boot (e.g. after the
 BMS-LOW sleep cycle's reboot) starts back in automatic mode, since the flag
@@ -132,7 +132,7 @@ same self-registration pattern as `TrackerService`, no global pointer kept.
 ## CommandService (lia_v1 only)
 
 Responds to short text commands, per explicit instruction (2026-07-22).
-`lia_v1` only: `IMU_ON`/`IMU_OFF` need the physical LSM6DSOXTR IMU that
+`lia_v1` only: `IMU ON`/`IMU OFF` need the physical LSM6DSOXTR IMU that
 `lia_v2` removed.
 
 Accepts a command if it arrives **either** as a broadcast/DM on the private
@@ -148,19 +148,26 @@ Being addressed directly to our node already requires the sender to
 know/have paired with us, and PKI authenticates to their actual identity
 key, so accepting DMs isn't a weaker bar than channel-PSK possession.
 
-Commands (case-insensitive; unrecognized text is silently ignored, since
-this channel may carry normal chat too):
+Commands (case-insensitive and whitespace-normalized -- extra/mixed spaces
+or tabs between the two words of an ON/OFF command still match, e.g. "led
+ off" or "Led  Off" both match `LED OFF`; unrecognized text is silently
+ignored, since this channel may carry normal chat too):
 
 | Command | Behaviour |
 | --- | --- |
 | `GPS` | Replies with the current `localPosition` lat/lon, or "No GPS fix yet". |
 | `BATTERY` | Replies with the MAX17048's charge percentage (see "Battery gauge + IMU" above for why this reads the gauge directly). |
-| `IMU_ON` | Starts `ImuMotionDriver` (begin()s the sensor + arms its GPIO interrupt on first use) and polls it every 250ms; sends "Activity detected" once per motion event, addressed to `kLiaTargetNode` on the private channel (same destination `TrackerService`/`ChargeStatusService` use, not a reply to whoever sent `IMU_ON`). |
-| `IMU_OFF` | Detaches the interrupt; stops polling. |
-| `CHG_ON` / `CHG_OFF` | Toggles `ChargeStatusService::instance()->setChargingNotificationsEnabled()`. |
-| `STB_ON` / `STB_OFF` | Toggles `ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled()`. |
-| `LED_ON` / `LED_OFF` | Calls `TrackerService::instance()->setManualLed()` -- see `TrackerService`'s own doc below for the one-way-override caveat. |
+| `IMU ON` | Starts `ImuMotionDriver` (begin()s the sensor + arms its GPIO interrupt on first use) and polls it every 250ms; sends "Activity detected" once per motion event, addressed to `kLiaTargetNode` on the private channel (same destination `TrackerService`/`ChargeStatusService` use, not a reply to whoever sent `IMU ON`). |
+| `IMU OFF` | Detaches the interrupt; stops polling. |
+| `CHG ON` / `CHG OFF` | Toggles `ChargeStatusService::instance()->setChargingNotificationsEnabled()`. |
+| `STB ON` / `STB OFF` | Toggles `ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled()`. |
+| `LED ON` / `LED OFF` | Calls `TrackerService::instance()->setManualLed()` -- see `TrackerService`'s own doc below for the one-way-override caveat. |
 | `HELP` | Replies with the command list. |
+
+Commands originally used an underscore (`IMU_ON`) and were briefly
+concatenated with no separator (`IMUON`) before settling on a space, per
+explicit instruction (2026-07-24) -- real usage showed people naturally
+type "Led off" with a space.
 
 Replies to a command go back as a DM to whoever sent it, on the channel the
 request arrived on (`isPromiscuous = true`, so both DMs and broadcasts on

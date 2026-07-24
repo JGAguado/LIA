@@ -6,20 +6,21 @@
 #include "lia/ImuMotionDriver.h"
 
 /// Responds to short text commands sent on the private kLiaChannelName
-/// channel (see MeshTargets.h) -- lia_v1 only, since IMU_ON/IMU_OFF need the
-/// physical LSM6DSOXTR IMU that lia_v2 removed. Replies go back as a DM to
-/// whoever sent the command, on the channel it arrived on -- promiscuous, so
-/// both a direct message and a broadcast on that channel work.
+/// channel (see MeshTargets.h) -- lia_v1 only, since "IMU ON"/"IMU OFF" need
+/// the physical LSM6DSOXTR IMU that lia_v2 removed. Replies go back as a DM
+/// to whoever sent the command, on the channel it arrived on -- promiscuous,
+/// so both a direct message and a broadcast on that channel work.
 ///
-/// Supported commands (case-insensitive, see handleCommand()):
-/// GPS, BATTERY, IMU_ON, IMU_OFF, CHG_ON, CHG_OFF, STB_ON, STB_OFF,
-/// LED_ON, LED_OFF, HELP.
+/// Supported commands (case-insensitive, whitespace-normalized -- see
+/// handleReceived() -- so "led  off" / "Led Off" all match "LED OFF", see
+/// handleCommand()): GPS, BATTERY, IMU ON, IMU OFF, CHG ON, CHG OFF,
+/// STB ON, STB OFF, LED ON, LED OFF, HELP.
 /// Unrecognized text is silently ignored, since this channel may carry
 /// normal chat too, not just commands.
 ///
 /// Construct once from lateInitVariant(), after TrackerService (whose
-/// instance() this reaches for LED_ON/OFF) and ChargeStatusService (whose
-/// instance() this reaches for CHG_ON/OFF and STB_ON/OFF): `new
+/// instance() this reaches for LED ON/OFF) and ChargeStatusService (whose
+/// instance() this reaches for CHG ON/OFF and STB ON/OFF): `new
 /// CommandService();`. Nothing needs to reference this instance afterwards
 /// -- MeshModule/OSThread both self-register on construction.
 class CommandService : public SinglePortModule, private concurrency::OSThread
@@ -33,11 +34,11 @@ class CommandService : public SinglePortModule, private concurrency::OSThread
 
   private:
     // How often to poll the IMU driver for a pending interrupt while
-    // IMU_ON is active. The interrupt itself is instant; this just bounds
+    // "IMU ON" is active. The interrupt itself is instant; this just bounds
     // how quickly we notice it (the ISR can't safely do the I2C read/send
     // itself -- see ImuMotionDriver).
     static constexpr uint32_t kImuActivePollMs = 250;
-    // Idle cadence when IMU_ON hasn't been requested -- just thread upkeep.
+    // Idle cadence when "IMU ON" hasn't been requested -- just thread upkeep.
     static constexpr uint32_t kIdlePollMs = 5000;
 
     void handleCommand(const meshtastic_MeshPacket &mp, const char *command);

@@ -54,7 +54,28 @@ ProcessMessage CommandService::handleReceived(const meshtastic_MeshPacket &mp)
     while (n > 0 && std::isspace(static_cast<unsigned char>(buf[n - 1])))
         buf[--n] = '\0';
 
-    handleCommand(mp, buf);
+    // Trim leading whitespace and collapse internal whitespace runs to a
+    // single space, so two-word commands ("LED ON") still match if someone
+    // fat-fingers an extra space or a tab between the words.
+    char *start = buf;
+    while (*start && std::isspace(static_cast<unsigned char>(*start)))
+        start++;
+    char normalized[64];
+    size_t ni = 0;
+    bool lastWasSpace = false;
+    for (char *c = start; *c && ni < sizeof(normalized) - 1; c++) {
+        if (std::isspace(static_cast<unsigned char>(*c))) {
+            if (!lastWasSpace)
+                normalized[ni++] = ' ';
+            lastWasSpace = true;
+        } else {
+            normalized[ni++] = *c;
+            lastWasSpace = false;
+        }
+    }
+    normalized[ni] = '\0';
+
+    handleCommand(mp, normalized);
     return ProcessMessage::CONTINUE;
 }
 
@@ -78,44 +99,44 @@ void CommandService::handleCommand(const meshtastic_MeshPacket &mp, const char *
         else
             snprintf(text, sizeof(text), "Battery gauge not detected");
         sendText(mp.from, mp.channel, text);
-    } else if (strcasecmp(command, "IMU_ON") == 0) {
+    } else if (strcasecmp(command, "IMU ON") == 0) {
         if (imu_.begin()) {
             imuActive_ = true;
             sendText(mp.from, mp.channel, "IMU activity detection ON");
         } else {
             sendText(mp.from, mp.channel, "IMU not detected");
         }
-    } else if (strcasecmp(command, "IMU_OFF") == 0) {
+    } else if (strcasecmp(command, "IMU OFF") == 0) {
         imu_.setInterruptEnabled(false);
         imuActive_ = false;
         sendText(mp.from, mp.channel, "IMU activity detection OFF");
-    } else if (strcasecmp(command, "CHG_ON") == 0) {
+    } else if (strcasecmp(command, "CHG ON") == 0) {
         if (ChargeStatusService::instance())
             ChargeStatusService::instance()->setChargingNotificationsEnabled(true);
         sendText(mp.from, mp.channel, "Charging notifications ON");
-    } else if (strcasecmp(command, "CHG_OFF") == 0) {
+    } else if (strcasecmp(command, "CHG OFF") == 0) {
         if (ChargeStatusService::instance())
             ChargeStatusService::instance()->setChargingNotificationsEnabled(false);
         sendText(mp.from, mp.channel, "Charging notifications OFF");
-    } else if (strcasecmp(command, "STB_ON") == 0) {
+    } else if (strcasecmp(command, "STB ON") == 0) {
         if (ChargeStatusService::instance())
             ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled(true);
         sendText(mp.from, mp.channel, "Charge-complete notifications ON");
-    } else if (strcasecmp(command, "STB_OFF") == 0) {
+    } else if (strcasecmp(command, "STB OFF") == 0) {
         if (ChargeStatusService::instance())
             ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled(false);
         sendText(mp.from, mp.channel, "Charge-complete notifications OFF");
-    } else if (strcasecmp(command, "LED_ON") == 0) {
+    } else if (strcasecmp(command, "LED ON") == 0) {
         if (TrackerService::instance())
             TrackerService::instance()->setManualLed(true);
         sendText(mp.from, mp.channel, "LED ON");
-    } else if (strcasecmp(command, "LED_OFF") == 0) {
+    } else if (strcasecmp(command, "LED OFF") == 0) {
         if (TrackerService::instance())
             TrackerService::instance()->setManualLed(false);
         sendText(mp.from, mp.channel, "LED OFF");
     } else if (strcasecmp(command, "HELP") == 0) {
         sendText(mp.from, mp.channel,
-                 "Commands: GPS, BATTERY, IMU_ON, IMU_OFF, CHG_ON, CHG_OFF, STB_ON, STB_OFF, LED_ON, LED_OFF, HELP");
+                 "Commands: GPS, BATTERY, IMU ON, IMU OFF, CHG ON, CHG OFF, STB ON, STB OFF, LED ON, LED OFF, HELP");
     }
     // Unrecognized text is silently ignored -- this channel may carry
     // normal chat too, not just commands.
