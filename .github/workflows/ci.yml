@@ -79,7 +79,6 @@ jobs:
         with:
           args: >-
             --no-progress
-            --exclude-mail
             --base website/dist
             'website/dist/**/*.html'
           fail: true

@@ -1,38 +1,77 @@
 ---
-// Click-to-load facade: no YouTube script, cookies, or network request
-// until the visitor explicitly chooses to play the video.
+// Two modes:
+// - autoplay (default false): embeds the iframe immediately, muted (required
+//   for autoplay to actually work in every major browser). The poster sits
+//   underneath the iframe and is only ever visible if the iframe fails to
+//   load at all (blocked by a network/content blocker, or no JS) -- the
+//   iframe's own 'error' event, plus a short load timeout as a backstop for
+//   blockers that never fire it, both reveal the poster in that case.
+// - click-to-load facade (autoplay=false): no YouTube script, cookies, or
+//   network request until the visitor explicitly chooses to play the video.
 import { Image } from 'astro:assets';
 
 interface Props {
   id: string;
   title: string;
   poster?: ImageMetadata;
+  autoplay?: boolean;
 }
 
-const { id, title, poster } = Astro.props;
+const { id, title, poster, autoplay = false } = Astro.props;
 const thumbnail = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 ---
 
-<div class="lia-yt-facade" data-video-id={id} data-title={title}>
+<div class="lia-yt-facade" data-video-id={id} data-title={title} data-autoplay={autoplay}>
   {
     poster ? (
-      <Image src={poster} alt="" widths={[480, 960]} sizes="100vw" />
+      <Image class="lia-yt-facade__poster" src={poster} alt="" widths={[480, 960]} sizes="100vw" />
     ) : (
-      <img src={thumbnail} alt="" loading="lazy" />
+      <img class="lia-yt-facade__poster" src={thumbnail} alt="" loading="lazy" />
     )
   }
-  <button type="button" aria-label={`Play video: ${title}`}>
-    <svg viewBox="0 0 68 48" width="68" height="48" aria-hidden="true">
-      <path
-        d="M66.5 7.7a8.4 8.4 0 0 0-5.9-6C55.1 0 34 0 34 0S12.9 0 7.4 1.7a8.4 8.4 0 0 0-5.9 6A87 87 0 0 0 0 24a87 87 0 0 0 1.5 16.3 8.4 8.4 0 0 0 5.9 6C12.9 48 34 48 34 48s21.1 0 26.6-1.7a8.4 8.4 0 0 0 5.9-6A87 87 0 0 0 68 24a87 87 0 0 0-1.5-16.3z"
-        fill="#f00"></path>
-      <path d="M45 24 27 14v20z" fill="#fff"></path>
-    </svg>
-  </button>
+  {
+    autoplay ? (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0`}
+        title={title}
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      />
+    ) : (
+      <button type="button" aria-label={`Play video: ${title}`}>
+        <svg viewBox="0 0 68 48" width="68" height="48" aria-hidden="true">
+          <path
+            d="M66.5 7.7a8.4 8.4 0 0 0-5.9-6C55.1 0 34 0 34 0S12.9 0 7.4 1.7a8.4 8.4 0 0 0-5.9 6A87 87 0 0 0 0 24a87 87 0 0 0 1.5 16.3 8.4 8.4 0 0 0 5.9 6C12.9 48 34 48 34 48s21.1 0 26.6-1.7a8.4 8.4 0 0 0 5.9-6A87 87 0 0 0 68 24a87 87 0 0 0-1.5-16.3z"
+            fill="#f00"
+          />
+          <path d="M45 24 27 14v20z" fill="#fff" />
+        </svg>
+      </button>
+    )
+  }
 </div>
 
 <script>
   document.querySelectorAll<HTMLElement>('.lia-yt-facade').forEach((facade) => {
+    if (facade.dataset.autoplay === 'true') {
+      const iframe = facade.querySelector('iframe');
+      if (!iframe) return;
+      // Belt-and-suspenders: most content blockers that strip the iframe
+      // never fire 'load' at all, so a short timeout catches those; a
+      // genuine 'error' catches the rest. Either way, the poster underneath
+      // is already there -- this just stops hiding it.
+      let loaded = false;
+      const revealFailed = () => {
+        if (!loaded) facade.classList.add('lia-yt-facade--failed');
+      };
+      iframe.addEventListener('load', () => {
+        loaded = true;
+      });
+      iframe.addEventListener('error', revealFailed);
+      setTimeout(revealFailed, 4000);
+      return;
+    }
+
     facade.querySelector('button')?.addEventListener('click', () => {
       const id = facade.dataset.videoId;
       const title = facade.dataset.title ?? 'YouTube video';
@@ -54,10 +93,27 @@ const thumbnail = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
     overflow: hidden;
     cursor: pointer;
   }
-  .lia-yt-facade img {
+  .lia-yt-facade__poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  .lia-yt-facade[data-autoplay='true'] .lia-yt-facade__poster {
+    position: absolute;
+    inset: 0;
+  }
+  .lia-yt-facade[data-autoplay='true'] iframe {
+    position: absolute;
+    inset: 0;
+  }
+  /* Hidden by default once autoplay is on -- only shown if the iframe
+     genuinely fails (see script above), so a failed embed doesn't leave an
+     opaque blank frame sitting on top of the poster. */
+  .lia-yt-facade[data-autoplay='true']:not(.lia-yt-facade--failed) iframe {
+    z-index: 1;
+  }
+  .lia-yt-facade--failed iframe {
+    display: none;
   }
   .lia-yt-facade button {
     position: absolute;
