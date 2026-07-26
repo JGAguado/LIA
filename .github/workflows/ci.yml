@@ -75,10 +75,19 @@ jobs:
         with:
           name: website-dist
           path: website/dist
+      - name: Link the site's /LIA base path to the built output
+        # astro build's `base: '/LIA'` config only prefixes hrefs -- it
+        # doesn't nest the physical output under an LIA/ folder, so
+        # root-relative links like /LIA/docs/... can't resolve against
+        # website/dist directly. lychee's --root-dir needs an actual LIA/
+        # directory to resolve into.
+        run: |
+          mkdir -p /tmp/lychee-root
+          ln -s "$GITHUB_WORKSPACE/website/dist" /tmp/lychee-root/LIA
       - uses: lycheeverse/lychee-action@v2
         with:
           args: >-
             --no-progress
-            --base website/dist
+            --root-dir /tmp/lychee-root
             'website/dist/**/*.html'
           fail: true
