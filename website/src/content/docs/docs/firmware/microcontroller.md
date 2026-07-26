@@ -48,5 +48,4 @@ ESP32-S3-MINI-1-N8 symbol's own pin definitions embedded in
 | 40         | —      | RXD0    | UART0 (reserved, not connected in this design)      |
 | —          | —      | GND     | Ground (multiple pins)                              |
 
-
 See also: [BOM](/LIA/docs/hardware/bom/), [Schematics](/LIA/docs/hardware/schematics/), [LoRa](/LIA/docs/firmware/lora/), [GPS](/LIA/docs/firmware/gps/), and [Building the Firmware](/LIA/docs/firmware/building-the-firmware/) (this pinout is what the `lia_v1` board variant is built from).

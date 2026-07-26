@@ -24,7 +24,7 @@ The ad-hoc test sender got formalized into `TrackerService`, then upgraded to se
 
 ## Phase 6 — The BMS switch, and a deep-sleep crash
 
-This is where the physical mode switch (`BMS`) got wired up: switch HIGH means continuous tracking (LED on, broadcast every 30 seconds, never sleep); switch LOW means a low-power cycle (wake roughly once a minute, get a fix, send it, sleep again). 
+This is where the physical mode switch (`BMS`) got wired up: switch HIGH means continuous tracking (LED on, broadcast every 30 seconds, never sleep); switch LOW means a low-power cycle (wake roughly once a minute, get a fix, send it, sleep again).
 
 Getting the sleep half of this working on real hardware surfaced a genuine crash: deep sleep uses an observer pattern where multiple parts of the firmware register interest in "we're about to sleep, do your cleanup." LIA's own power-gating hook was registering *too early* — before the radio and GPS drivers had registered their own graceful-shutdown hooks — so peripheral power was being cut before those drivers could tell their chips to standby cleanly. The radio's own internal assertion caught the resulting SPI failure. The fix was purely about *when* to register the hook, not what it does; confirmed across two full real sleep/wake cycles afterward.
 

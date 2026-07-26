@@ -22,21 +22,21 @@ This matters beyond just labeling: stock Meshtastic only skips its own competing
 
 The destination for every LIA-specific message is a single `NodeNum` constant defined once in the firmware (`firmware/services/MeshTargets.h`, `kLiaTargetNode`) — derived from that node's MAC address (the low 32 bits, matching how Meshtastic derives its own `NodeNum`s). It's currently a fixed value baked in at build time, not yet exposed as an app-configurable setting, so building your own copy of the firmware means editing that constant to your own target node's `NodeNum` first.
 
-This is deliberate: Meshtastic encrypts per-channel rather than per-recipient, and position/telemetry handling in stock Meshtastic is promiscuous (any node that can decrypt a packet updates its own map from it, regardless of who it was addressed to) — sending on a channel would let *any* node holding that channel's PSK see this device's position. A direct message to a specific `NodeNum` is commonly PKI-encrypted by the official app/firmware, so only that one node can read it, and it sidesteps channel/PSK provisioning entirely — nothing needs to be configured on the receiving side beyond pairing with the device. (An earlier design routed everything through a private channel found by name; this was replaced in favor of direct addressing, since PKI direct messages already bypass the channel/PSK system and report `channel=0` regardless of which channel was open at the time.)
+This is deliberate: Meshtastic encrypts per-channel rather than per-recipient, and position/telemetry handling in stock Meshtastic is promiscuous (any node that can decrypt a packet updates its own map from it, regardless of who it was addressed to) — sending on a channel would let _any_ node holding that channel's PSK see this device's position. A direct message to a specific `NodeNum` is commonly PKI-encrypted by the official app/firmware, so only that one node can read it, and it sidesteps channel/PSK provisioning entirely — nothing needs to be configured on the receiving side beyond pairing with the device. (An earlier design routed everything through a private channel found by name; this was replaced in favor of direct addressing, since PKI direct messages already bypass the channel/PSK system and report `channel=0` regardless of which channel was open at the time.)
 
 ## Text commands
 
 Send these as a direct message to the device — replies come back the same way, as a DM to whoever sent the command. Commands are case-insensitive and tolerant of extra spacing (`led off`, `Led  Off`, and `LED OFF` all work).
 
-| Command | Reply / effect |
-| --- | --- |
-| `GPS` | Current position, or "No GPS fix yet". |
-| `BATTERY` | Current gauge charge percentage. |
+| Command              | Reply / effect                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GPS`                | Current position, or "No GPS fix yet".                                                                                                       |
+| `BATTERY`            | Current gauge charge percentage.                                                                                                             |
 | `IMU ON` / `IMU OFF` | Arms/disarms motion detection — sends `"Activity detected"` on a real motion event (see [Accelerometer](/LIA/docs/firmware/accelerometer/)). |
-| `CHG ON` / `CHG OFF` | Enables/disables the `"Charging"` notification. |
-| `STB ON` / `STB OFF` | Enables/disables the `"Device charged"` notification. |
-| `LED ON` / `LED OFF` | Manually overrides the status LED (see [RGB LED](/LIA/docs/firmware/rgb-led/)). |
-| `HELP` | Lists all commands. |
+| `CHG ON` / `CHG OFF` | Enables/disables the `"Charging"` notification.                                                                                              |
+| `STB ON` / `STB OFF` | Enables/disables the `"Device charged"` notification.                                                                                        |
+| `LED ON` / `LED OFF` | Manually overrides the status LED (see [RGB LED](/LIA/docs/firmware/rgb-led/)).                                                              |
+| `HELP`               | Lists all commands.                                                                                                                          |
 
 `IMU ON`'s activity messages are unsolicited (not a reply to a command) and always go to the configured target node, same as position broadcasts and charge-status notifications.
 

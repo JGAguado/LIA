@@ -141,7 +141,9 @@ const id = `stl-${Math.random().toString(36).slice(2, 9)}`;
     { rootMargin: '200px' },
   );
 
-  document.querySelectorAll<HTMLElement>('.lia-stl__canvas').forEach((container) => observer.observe(container));
+  document
+    .querySelectorAll<HTMLElement>('.lia-stl__canvas')
+    .forEach((container) => observer.observe(container));
 </script>
 
 <style>
