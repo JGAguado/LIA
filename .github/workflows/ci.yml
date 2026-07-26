@@ -84,10 +84,18 @@ jobs:
         run: |
           mkdir -p /tmp/lychee-root
           ln -s "$GITHUB_WORKSPACE/website/dist" /tmp/lychee-root/LIA
+      # Excludes:
+      # - the 404 page's own canonical URL, which 404s by definition (it's
+      #   the error document, not a real route) -- Starlight generates this
+      #   tag for every page including 404.html, nothing to fix here.
+      # - u-blox.com, which lychee reports as an HTTP/2 protocol error
+      #   (server-side, intermittent) rather than a real broken link.
       - uses: lycheeverse/lychee-action@v2
         with:
           args: >-
             --no-progress
             --root-dir /tmp/lychee-root
+            --exclude 'https://jgaguado\.github\.io/LIA/404/$'
+            --exclude 'u-blox\.com'
             'website/dist/**/*.html'
           fail: true

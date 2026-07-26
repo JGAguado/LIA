@@ -14,8 +14,11 @@ All files below live in the [GitHub repository](https://github.com/JGAguado/LIA)
 
 ## Enclosure
 
-- [STEP files](https://github.com/JGAguado/LIA/tree/main/enclosure/step)
-- [STL files](https://github.com/JGAguado/LIA/tree/main/enclosure/stl) — ready for 3D printing
+Each of the three enclosure versions has its own `step/`/`stl/` exports (see [Enclosure](/LIA/docs/hardware/enclosure/) for what differs between them):
+
+- [V1.0-Detachable](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Detachable) — [STEP](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Detachable/step) / [STL](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Detachable/stl)
+- [V1.0-Fixed](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Fixed) — [STEP](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Fixed/step) / [STL](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.0-Fixed/stl)
+- [V1.1-Fixed](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.1-Fixed) — [STEP](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.1-Fixed/step) / [STL](https://github.com/JGAguado/LIA/tree/main/enclosure/V1.1-Fixed/stl)
 - [Manufacturing drawings](/LIA/files/LIA-enclosure-assembly-drawing.pdf)
 
 ## Interactive 3D preview
