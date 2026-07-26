@@ -5,10 +5,10 @@
 #include "concurrency/OSThread.h"
 
 /// Reports LiaBoard's charger status (TP4056 CHG/STBY) to the configured
-/// target node as plain text, on the same private channel TrackerService
-/// uses (MeshTargets.h) -- Phase 7, per explicit instruction (2026-07-22) to
-/// send messages instead of the RED LED breathing/off behaviour
-/// firmware/AGENTS.md originally specified for this phase.
+/// target node as a direct message (MeshTargets.h's kLiaTargetNode) -- Phase
+/// 7, per explicit instruction (2026-07-22) to send messages instead of the
+/// RED LED breathing/off behaviour firmware/AGENTS.md originally specified
+/// for this phase.
 ///
 /// Edge-triggered against LiaBoard::instance().isCharging() /
 /// isChargeComplete(): sends "Charging" once when charging starts, "Device
@@ -17,7 +17,7 @@
 ///
 /// Construct once from lateInitVariant(): `new ChargeStatusService();`.
 /// CommandService (constructed afterwards) reaches this one instance via
-/// instance() to act on CHG_ON/CHG_OFF/STB_ON/STB_OFF commands -- a
+/// instance() to act on CHG ON/CHG OFF/STB ON/STB OFF commands -- a
 /// self-registering static pointer set in the constructor, the same pattern
 /// Meshtastic's own globals (nodeDB, service, screen, ...) use, rather than
 /// a lazily-constructed Meyer's singleton like LiaBoard: this object's

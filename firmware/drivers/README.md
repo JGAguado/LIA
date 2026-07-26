@@ -21,9 +21,9 @@ context to send the actual "Activity detected" mesh message.
 
 - **SX1262 radio** and **SAM-M10Q GNSS** -- stock Meshtastic behaviour,
   switched on purely by the pin `#define`s in
-  [`../meshtastic/variants/esp32s3/lia_v1/variant.h`](../meshtastic/variants/esp32s3/lia_v1/variant.h)
-  (and `lia_v2/variant.h`). Meshtastic already contains a full SX1262
-  (RadioLib) and NMEA/UBX GPS stack.
+  [`../meshtastic/variants/esp32s3/lia_v1/variant.h`](../meshtastic/variants/esp32s3/lia_v1/variant.h).
+  Meshtastic already contains a full SX1262 (RadioLib) and NMEA/UBX GPS
+  stack.
 - **Peripheral power, status LED, mode switch, charger status** -- owned by
   [`../board/LiaBoard.*`](../board/README.md), since none of them are stock
   Meshtastic concepts but all are simple enough (plain GPIO/PWM) not to

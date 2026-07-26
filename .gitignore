@@ -24,7 +24,18 @@ hardware/schematics/references/
 # PlatformIO build artifacts / fetched libraries (firmware/tools/*/ standalone projects)
 .pio/
 
+# Meshtastic firmware checkout, cloned locally by firmware/tools/build.ps1 -- not vendored, see firmware/README.md.
+/meshtastic-firmware/
+
+# KiCad lock files (transient, created while the project is open)
+*.kicad_pcb.lck
+*.kicad_sch.lck
+
+# Editor-local settings (may contain machine-specific absolute paths)
+.vscode/
+
 # OS junk
 .DS_Store
 Thumbs.db
 desktop.ini
+MODIFICATIONS.md

@@ -10,14 +10,13 @@
 ///
 /// Not a Meyer's singleton like LiaBoard -- nothing besides CommandService
 /// needs to reach it, so CommandService just owns one as a plain member and
-/// starts/stops it on IMU_ON/IMU_OFF.
+/// starts/stops it on IMU ON/IMU OFF.
 class ImuMotionDriver
 {
   public:
     /// Starts I2C comms, configures the wake-up detector, and arms the
     /// hardware interrupt on LIA_PIN_IMU_INT. Returns false if the sensor
-    /// doesn't respond (e.g. this board doesn't actually have one -- lia_v2
-    /// removed it). Safe to call again after the first success (no-op).
+    /// doesn't respond. Safe to call again after the first success (no-op).
     bool begin();
 
     /// Re-attaches (true) or detaches (false) the GPIO interrupt. begin()

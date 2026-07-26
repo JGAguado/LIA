@@ -16,7 +16,7 @@ Meshtastic Core -> Board Definition -> LiaBoard -> Drivers -> TrackerService
 | `setRedLed(uint8_t)` | `LIA_PIN_LED_RED` (GPIO40) | Active-high PWM, 0 = off / 255 = full brightness (see "Open questions"). |
 | `isCharging()` | `LIA_PIN_CHG` (GPIO1) | TP4056 `CHRG`, open-drain active-low. |
 | `isChargeComplete()` | `LIA_PIN_STBY` (GPIO2) | True when `STBY` reads LOW -- pulled HIGH externally while charging, pulled LOW by an internal N-MOSFET on completion (confirmed 2026-07-22, see "Open questions" below). |
-| `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). |
+| `isBmsHigh()` | `LIA_PIN_BMS` (GPIO15) | Mode-switch reading. HIGH = continuous/no-sleep, LOW = wake-every-minute sleep cycle -- see `TrackerService` (Phase 6). The switch is physically 3-position; the third (OFF) cuts power to the regulator feeding the ESP32-S3 entirely (battery still charges), so there's no firmware state for it -- `isBmsHigh()` only ever runs while the switch is already in one of the other two positions. |
 
 It deliberately does **not** touch the SX1262 or SAM-M10Q themselves (that's
 stock Meshtastic, driven by the pin `#define`s in

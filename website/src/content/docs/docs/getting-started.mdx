@@ -3,7 +3,6 @@ title: Getting Started
 description: Flash firmware onto a LIA board and pair it with the Meshtastic app.
 ---
 
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 This guide gets a LIA board running Meshtastic firmware and visible in the Meshtastic companion app. It assumes you already have an assembled board — see [Assembly](/LIA/docs/hardware/assembly/) if you're starting from bare PCBs.
 
@@ -15,30 +14,19 @@ This guide gets a LIA board running Meshtastic firmware and visible in the Mesht
 
 ## 1. Flash the firmware
 
-LIA runs stock [Meshtastic](https://meshtastic.org/) firmware for the ESP32-S3 target, plus LIA-specific configuration layered on top (see [Meshtastic Configuration](/LIA/docs/firmware/meshtastic-configuration/)).
+LIA runs stock [Meshtastic](https://meshtastic.org/) firmware for the ESP32-S3 target, plus a LIA-specific `lia_v1` board variant layered on top that adds support for the mode switch, status LED, charger status, battery gauge, IMU, and text-command interface — the same `lia_v1` build is correct for both V1.0 and V1.1 boards (see [Building the Firmware](/LIA/docs/firmware/building-the-firmware/#which-variant)).
 
-<Tabs>
-  <TabItem label="Web Flasher">
-    <Steps>
-    1. Connect the board.
-    2. Open the [Meshtastic Web Flasher](https://flasher.meshtastic.org/) in Chrome or Edge.
-    3. Select the matching ESP32-S3 target and click **Flash**.
-    </Steps>
-  </TabItem>
-  <TabItem label="CLI (meshtastic-python)">
-    <Steps>
-    1. Install the CLI: `pip install meshtastic`
-    2. Put the board in bootloader mode (hold **BOOT**, tap **RESET**, release **BOOT**).
-    3. Flash: `meshtastic --port <PORT> --flash firmware.bin`
-    </Steps>
-  </TabItem>
-  <TabItem label="LIA custom build (recommended)">
-    LIA has `lia_v1`/`lia_v2` Meshtastic board variants with full support for the mode switch, RED LED, charger status, battery gauge, and (on `lia_v1`) the IMU and text-command interface — this is the build that actually knows about LIA's board-specific behavior, rather than treating it as a generic ESP32-S3. See [Building the Firmware](/LIA/docs/firmware/building-the-firmware/) for the build/flash procedure.
-  </TabItem>
-</Tabs>
+:::caution
+The [Meshtastic Web Flasher](https://flasher.meshtastic.org/) only offers stock, generic ESP32-S3 firmware — it has no `lia_v1` target and doesn't know about LIA's board-specific peripherals, so it isn't usable here. Go straight to **[Building the Firmware](/LIA/docs/firmware/building-the-firmware/)** for the full build-and-flash procedure.
+:::
 
-> [!TIP]
-> If the board doesn't show up as a serial port, install the [CP210x](https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers) or native USB CDC driver for your OS first.
+:::caution
+The board's mode switch has a third, OFF position that cuts power to the ESP32-S3 entirely (see [Power Management](/LIA/docs/firmware/power-management/)). USB/pogo power alone won't turn the board on if the switch is OFF — it only charges the battery. Make sure the switch is in either of its other two positions before connecting to flash or use the device over serial.
+:::
+
+:::tip
+If the board doesn't show up as a serial port, install the [CP210x](https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers) or native USB CDC driver for your OS first.
+:::
 
 ## 2. Pair with the app
 
@@ -46,12 +34,13 @@ LIA runs stock [Meshtastic](https://meshtastic.org/) firmware for the ESP32-S3 t
 2. Select your LIA device from the scan list.
 3. Once connected, confirm it reports a GPS fix — see [GPS](/LIA/docs/firmware/gps/) if it doesn't.
 
-> [!TIP]
-> Set the device role to **Tracker** and add a private channel named exactly `Test` before expecting position broadcasts or any of LIA's text commands to work — see [Meshtastic Configuration](/LIA/docs/firmware/meshtastic-configuration/) for exactly what's required and why.
+:::tip
+Set the device role to **Tracker** and note the node ID of the phone/node you want LIA to report to — LIA sends position broadcasts and text-command replies as direct messages to a single hardcoded target node, not a channel broadcast, so that node must be configured in the firmware before flashing — see [Meshtastic Configuration](/LIA/docs/firmware/meshtastic-configuration/) for exactly what's required and why.
+:::
 
 ## 3. Confirm mesh connectivity
 
-Send `HELP` on the `Test` channel (or as a direct message to the device). A reply listing the available commands confirms the LoRa radio, antenna, and firmware command handling are all working end-to-end — see [Meshtastic Configuration](/LIA/docs/firmware/meshtastic-configuration/) for the full command list.
+Send `HELP` as a direct message to the device. A reply listing the available commands confirms the LoRa radio, antenna, and firmware command handling are all working end-to-end — see [Meshtastic Configuration](/LIA/docs/firmware/meshtastic-configuration/) for the full command list.
 
 ## Next steps
 

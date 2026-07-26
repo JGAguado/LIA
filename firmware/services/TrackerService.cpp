@@ -1,6 +1,5 @@
 #include "TrackerService.h"
 
-#include "ChannelLookup.h"
 #include "MeshService.h"
 #include "MeshTargets.h"
 #include "NodeDB.h"
@@ -64,16 +63,6 @@ int32_t TrackerService::runOnce()
 
 void TrackerService::sendPosition()
 {
-    int16_t channelIndex = findLiaChannelIndexByName(kLiaChannelName);
-    if (channelIndex < 0) {
-        // Fail closed: never fall back to the default/public channel just
-        // because "Test" isn't configured yet -- that would broadcast the
-        // position to anyone, which is exactly what naming a channel here
-        // was meant to prevent.
-        LOG_WARN("TrackerService: no channel named \"%s\" configured, skipping position send", kLiaChannelName);
-        return;
-    }
-
     meshtastic_Position pos = meshtastic_Position_init_default;
     pos.latitude_i = localPosition.latitude_i;
     pos.longitude_i = localPosition.longitude_i;
@@ -85,12 +74,10 @@ void TrackerService::sendPosition()
 
     meshtastic_MeshPacket *p = allocDataPacket();
     p->to = kLiaTargetNode;
-    p->channel = (uint8_t)channelIndex;
     p->want_ack = false;
     p->decoded.payload.size = pb_encode_to_bytes(p->decoded.payload.bytes, sizeof(p->decoded.payload.bytes),
                                                   &meshtastic_Position_msg, &pos);
 
     service->sendToMesh(p);
-    LOG_INFO("TrackerService: sent position (lat=%d, lon=%d) to 0x%08x on channel %d (\"%s\")", pos.latitude_i, pos.longitude_i,
-              kLiaTargetNode, channelIndex, kLiaChannelName);
+    LOG_INFO("TrackerService: sent position (lat=%d, lon=%d) to 0x%08x", pos.latitude_i, pos.longitude_i, kLiaTargetNode);
 }

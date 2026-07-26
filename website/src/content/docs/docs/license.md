@@ -15,7 +15,8 @@ The full license text is in [`LICENSE`](https://github.com/JGAguado/LIA/blob/mai
 - ⚠️ **NonCommercial** — you may not use the material for commercial purposes without separate permission.
 - ⚠️ **ShareAlike** — if you remix or build upon the material, you must distribute your contributions under the same license.
 
-> [!NOTE]
-> CC BY-NC-SA 4.0 is not an OSI-approved open-source license, because of the non-commercial clause. LIA is "open" in the sense that the designs and code are fully published and freely usable for personal, educational, and community projects — but commercial production or resale requires contacting the maintainers.
+:::note
+CC BY-NC-SA 4.0 is not an OSI-approved open-source license, because of the non-commercial clause. LIA is "open" in the sense that the designs and code are fully published and freely usable for personal, educational, and community projects — but commercial production or resale requires contacting the maintainers.
+:::
 
 See also: [Contributing](/LIA/docs/contributing/).

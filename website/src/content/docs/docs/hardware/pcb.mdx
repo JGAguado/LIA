@@ -28,13 +28,13 @@ LIA's main board is designed in [KiCad](https://www.kicad.org/) and built around
 | Function         | Part                          |
 | ---------------- | ----------------------------- |
 | MCU + Wi-Fi/BLE  | ESP32-S3-MINI-1-N8            |
-| LoRa transceiver | SX1262                        |
+| LoRa transceiver | [Wio-SX1262](https://www.seeedstudio.com/Wio-SX1262-LF-Wireless-Module-p-6659.html)                        |
 | GNSS             | u-blox SAM-M10Q               |
-| Power            | 18650 Li-ion + USB-C charging |
+| Power            | 18650 (V1.0) or 5023450 pouch cell (V1.1) Li-ion + USB-C charging — see [Battery](/LIA/docs/firmware/battery/) |
 
 ## Antennas
 
-- YFNF868F3AM FPC LoRa antenna (868MHz)
+- YFNF868F3AM FPC LoRa antenna (868MHz), the default on-board option — or alternatively, a standard omnidirectional linear antenna for the 868/915MHz band, plugged into the same connector on the SX1262 module (see [Assembly](/LIA/docs/hardware/assembly/)), such as [Seeed's LoRa Antenna Kit](https://www.seeedstudio.com/LoRa-Antenna-Kit-for-reTerminal-DM-p-5714.html)
 - Ceramic GNSS patch antenna
 
 ## Design files

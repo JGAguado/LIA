@@ -9,7 +9,6 @@ import tailwindcss from '@tailwindcss/vite';
 import mermaid from 'astro-mermaid';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import remarkGithubAdmonitionsToDirectives from 'remark-github-beta-blockquote-admonitions';
 import starlightImageZoom from 'starlight-image-zoom';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -29,8 +28,13 @@ function syncGeneratedAssets() {
     hooks: {
       'astro:config:setup'() {
         cpSync(`${repoRoot}hardware/pcb/bom`, `${publicDir}bom`, { recursive: true, force: true });
-        for (const version of ['V1R1', 'V1R2', 'V2R1']) {
-          cpSync(`${repoRoot}enclosure/${version}/stl`, `${publicDir}stl/${version.toLowerCase()}`, {
+        const enclosureVersions = {
+          'V1.0-Detachable': 'v1.0-detachable',
+          'V1.0-Fixed': 'v1.0-fixed',
+          'V1.1-Fixed': 'v1.1-fixed',
+        };
+        for (const [folder, slug] of Object.entries(enclosureVersions)) {
+          cpSync(`${repoRoot}enclosure/${folder}/stl`, `${publicDir}stl/${slug}`, {
             recursive: true,
             force: true,
           });
@@ -45,9 +49,14 @@ export default defineConfig({
   site: 'https://jgaguado.github.io',
   base: '/LIA',
   markdown: {
-    // remark-github-beta-blockquote-admonitions ships slightly mismatched unified types;
-    // it works fine at runtime alongside remark-math.
-    remarkPlugins: [remarkMath, /** @type {any} */ (remarkGithubAdmonitionsToDirectives)],
+    // Admonitions use Starlight's own native `:::note`/`:::tip`/`:::caution`/
+    // `:::danger` directive syntax (handled internally by Starlight's own
+    // remark-directive-based Aside rendering) -- an earlier attempt used
+    // GitHub-style `> [!NOTE]` blockquotes via a third-party remark plugin,
+    // but that plugin produces its own generic, unstyled `.admonition` markup
+    // rather than Starlight's `<aside class="starlight-aside--*">`, which is
+    // why they rendered as plain text.
+    remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
   },
   integrations: [

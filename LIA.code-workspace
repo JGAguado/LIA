@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "platformio",
+			"path": "firmware/platformio"
+		}
+	],
+	"settings": {}
+}

@@ -56,6 +56,16 @@ and the MAX17048 battery gauge are detectable -- see
 
 PPC MUST be HIGH before using either the SX1262 or the SAM‑M10Q.
 
+The BMS switch (GPIO15) is physically a 3-position switch, but the firmware
+only ever reads HIGH/LOW via `isBmsHigh()`. The third position is not a
+firmware state at all -- it disables the regulator that powers the ESP32-S3
+entirely (while still allowing the battery to charge), so there is no power
+for any code to run while it's selected. Practically: **do not leave the
+switch in the OFF position when trying to flash or use the board over USB**
+-- the USB/pogo charger only feeds the TP4056 charge circuit, not the system
+power rail, so the board will not power on from USB alone if the switch is
+OFF.
+
 ## Firmware Architecture
 
 Meshtastic Core
@@ -72,7 +82,7 @@ LiaBoard owns:
 - armDeepSleepHook()
 
 Drivers own:
-- ImuMotionDriver: talks to the LSM6DSOXTR directly (lia_v1 only) -- see
+- ImuMotionDriver: talks to the LSM6DSOXTR directly -- see
   `drivers/README.md` for why this bypasses stock Meshtastic's own
   accelerometer support.
 
@@ -86,7 +96,7 @@ ChargeStatusService owns:
 - "Charging"/"Device charged" notifications, each independently toggleable
   (CHG ON/OFF, STB ON/OFF, via CommandService)
 
-CommandService (lia_v1 only) owns:
+CommandService owns:
 - the text-command interface described in the "Target Node" section below
   and in `services/README.md`
 
@@ -125,6 +135,17 @@ E7:25:DC:E6:D6:63
 
 Create a single configuration constant for the destination.
 Future versions should migrate to configurable Meshtastic Node ID.
+
+Everything LIA-specific (position broadcasts, charge-status messages,
+CommandService replies/pushes) is a direct message to this node, not a
+channel broadcast -- per explicit instruction (2026-07-26), superseding an
+earlier private-channel-name design (a channel literally named `Test`,
+looked up by name at send/receive time). That design worked but required
+out-of-band channel setup and failed closed silently when misconfigured;
+direct messages already require knowing/pairing with the target node and
+are commonly PKI-encrypted to that node's identity key by the official app,
+so addressing by node directly isn't a weaker bar than possessing a
+channel's PSK.
 
 ---
 
@@ -255,9 +276,9 @@ User Validation:
 ## Phase 7 – Charging Behaviour
 
 Superseded 2026-07-22 by explicit instruction: no LED indication for this
-phase. Instead, report status as a mesh text message to the configured
-target node (see "Target Node"), on the same private channel TrackerService
-uses (`ChannelLookup`/`MeshTargets.h`):
+phase. Instead, report status as a direct message to the configured
+target node (see "Target Node"), the same way TrackerService addresses it
+(`MeshTargets.h`):
 - Send `"Charging"` when CHG is detected (edge-triggered, once per
   charging-session start).
 - Send `"Device charged"` when STBY reads LOW (edge-triggered, once per

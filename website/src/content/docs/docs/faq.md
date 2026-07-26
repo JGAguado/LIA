@@ -13,7 +13,7 @@ Only where there's LoRa mesh coverage — either your own nodes or nearby commun
 
 ## Is LIA waterproof?
 
-The enclosure is still under design, with the aim to have with a gasket seal on future revisions. but it hasn't been submersion- or pressure-tested yet — see [Enclosure](/LIA/docs/hardware/enclosure/) and [Assembly](/LIA/docs/hardware/assembly/).
+The enclosure is still under design, with the aim to have with a gasket seal on future revisions. However at the moment, and for development purposes the enclosure has pockets to easily access the BMS switch and external antennas — see [Enclosure](/LIA/docs/hardware/enclosure/) and [Assembly](/LIA/docs/hardware/assembly/).
 
 ## Can I build my own?
 

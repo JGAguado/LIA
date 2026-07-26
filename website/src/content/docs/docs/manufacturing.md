@@ -18,7 +18,8 @@ The files needed to order a fabrication/assembly run are generated from KiCad's 
 
 The enclosure is composed of parts designed for CNC machining and/or 3D printing (resin/FDM) from the STEP/STL exports under [`enclosure/step/`](https://github.com/JGAguado/LIA/tree/main/enclosure/step) and [`enclosure/stl/`](https://github.com/JGAguado/LIA/tree/main/enclosure/stl). No production-scale manufacturing process (injection molding, tooling) has been defined yet — this is still a prototype-stage design.
 
-> [!NOTE]
-> If you fabricate a batch of boards or enclosures and want to document your process (fab house, settings, yield), please contribute it back — see [Contributing](/LIA/docs/contributing/).
+:::note
+If you fabricate a batch of boards or enclosures and want to document your process (fab house, settings, yield), please contribute it back — see [Contributing](/LIA/docs/contributing/).
+:::
 
 See also: [BOM](/LIA/docs/hardware/bom/) and [Downloads](/LIA/docs/downloads/).

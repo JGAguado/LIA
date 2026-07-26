@@ -5,8 +5,9 @@ description: What LIA is, how it works, and where to go next.
 
 **LIA** is an open-source, low-power pet and asset tracker built on top of [Meshtastic](https://meshtastic.org/) and LoRa mesh networking. It focuses on being a compact, long-range, subscription-free tracking device that keeps working when there's no cell coverage or Wi-Fi at all.
 
-> [!NOTE]
-> LIA is an experimental, community-driven project. Hardware and firmware are both under active development — see the [Roadmap](https://github.com/JGAguado/LIA#roadmap) for current status before relying on it for anything safety-critical.
+:::note
+LIA is an experimental, community-driven project. Hardware and firmware are both under active development — see the [Roadmap](https://github.com/JGAguado/LIA#roadmap) for current status before relying on it for anything safety-critical.
+:::
 
 ## Why LIA exists
 

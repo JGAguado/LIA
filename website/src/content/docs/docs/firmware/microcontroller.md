@@ -7,24 +7,25 @@ LIA is built around an **ESP32-S3-MINI-1-N8** (`U1`), which runs the Meshtastic 
 
 ## Pinout
 
-> [!NOTE]
-> **Module pin ≠ GPIO number.** The "Module pin" column below is the
-> ESP32-S3-MINI-1-N8's own physical pin number (matching the schematic symbol),
-> which does **not** line up 1:1 with the GPIO number firmware actually uses —
-> e.g. module pin 8 carries the `SDA` net, but that pin is silicon **GPIO4**, not
-> GPIO8. The GPIO column was derived by cross-referencing this table against the
-> ESP32-S3-MINI-1-N8 symbol's own pin definitions embedded in
-> `hardware/kicad/LIA.kicad_sch`, and is what's actually used in
-> `firmware/meshtastic/variants/lia_v1/variant.h`.
+:::note
+**Module pin ≠ GPIO number.** The "Module pin" column below is the
+ESP32-S3-MINI-1-N8's own physical pin number (matching the schematic symbol),
+which does **not** line up 1:1 with the GPIO number firmware actually uses —
+e.g. module pin 8 carries the `SDA` net, but that pin is silicon **GPIO4**, not
+GPIO8. The GPIO column was derived by cross-referencing this table against the
+ESP32-S3-MINI-1-N8 symbol's own pin definitions embedded in
+`hardware/kicad/LIA.kicad_sch`, and is what's actually used in
+`firmware/meshtastic/variants/lia_v1/variant.h`.
+:::
 
 | Module pin | GPIO   | Signal  | Function                                          |
 | ---------- | ------ | ------- | -------------------------------------------------- |
 | 3          | —      | 3V3     | 3.3 V supply                                        |
 | 45         | —      | EN      | Enable/reset — 10 kΩ pull-up, 1 µF decouple, reset button |
 | 4          | GPIO0  | IO0     | Boot mode strap + BOOT button                       |
-| 8          | GPIO4  | SDA     | I2C data — shared bus (IMU on `lia_v1`, fuel gauge on both — see [Battery](/LIA/docs/firmware/battery/)) |
+| 8          | GPIO4  | SDA     | I2C data — shared bus (IMU and fuel gauge, both boards — see [Battery](/LIA/docs/firmware/battery/)) |
 | 9          | GPIO5  | SCL     | I2C clock — shared bus                              |
-| 10         | GPIO6  | IMU_INT | Accelerometer interrupt, `lia_v1` only — `lia_v2` has no IMU populated (see [Accelerometer](/LIA/docs/firmware/accelerometer/)) |
+| 10         | GPIO6  | IMU_INT | Accelerometer interrupt (see [Accelerometer](/LIA/docs/firmware/accelerometer/)) |
 | 12         | GPIO8  | RESET   | LoRa radio reset (SX1262)                           |
 | 13         | GPIO9  | BUSY    | LoRa radio busy (SX1262)                            |
 | 14         | GPIO10 | NSS     | LoRa radio SPI chip select (SX1262)                 |
@@ -38,11 +39,11 @@ LIA is built around an **ESP32-S3-MINI-1-N8** (`U1`), which runs the Meshtastic 
 | 24         | GPIO20 | IO20    | USB D+                                              |
 | 5          | GPIO1  | CHG     | Battery charger status                              |
 | 6          | GPIO2  | STBY    | Battery charger standby status                      |
-| 19         | GPIO15 | BMS     | Beacon Mode Selector                                |
+| 19         | GPIO15 | BMS     | Beacon Mode Selector — physically 3-position; see [Power Management](/LIA/docs/firmware/power-management/) for the OFF position |
 | 25         | GPIO21 | PPC     | Peripheral power control                            |
-| 36         | GPIO40 | Lred    | Status LED, red channel — the only one actually usable, see [RGB LED](/LIA/docs/firmware/rgb-led/) |
-| 37         | GPIO41 | Lgreen  | Status LED, green channel — not wired for use, firmware never touches it |
-| 38         | GPIO42 | Lblue   | Status LED, blue channel — not wired for use, firmware never touches it |
+| 36         | GPIO40 | Lred    | Status LED, red channel — see [RGB LED](/LIA/docs/firmware/rgb-led/) |
+| 37         | GPIO41 | Lgreen  | Status LED, green channel — see [RGB LED](/LIA/docs/firmware/rgb-led/) |
+| 38         | GPIO42 | Lblue   | Status LED, blue channel — see [RGB LED](/LIA/docs/firmware/rgb-led/) |
 | 39         | —      | TXD0    | UART0 (reserved, not connected in this design)      |
 | 40         | —      | RXD0    | UART0 (reserved, not connected in this design)      |
 | —          | —      | GND     | Ground (multiple pins)                              |

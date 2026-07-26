@@ -21,8 +21,8 @@
 /// AGENTS.md (2026-07-19) -- MOD.md's polarity is not used.
 ///
 /// Construct once from lateInitVariant() (after the radio is initialized):
-/// `new TrackerService();`. CommandService (lia_v1 only, constructed later)
-/// reaches this one instance via instance() to act on LED_ON/LED_OFF -- a
+/// `new TrackerService();`. CommandService (constructed later) reaches this
+/// one instance via instance() to act on "LED ON"/"LED OFF" -- a
 /// self-registering static pointer set in the constructor, same pattern as
 /// ChargeStatusService::instance() (see that class for why this isn't a
 /// lazily-constructed Meyer's singleton like LiaBoard).

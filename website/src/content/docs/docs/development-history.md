@@ -24,7 +24,7 @@ The ad-hoc test sender got formalized into `TrackerService`, then upgraded to se
 
 ## Phase 6 — The BMS switch, and a deep-sleep crash
 
-This is where the physical mode switch (`BMS`) got wired up: switch HIGH means continuous tracking (LED on, broadcast every 30 seconds, never sleep); switch LOW means a low-power cycle (wake roughly once a minute, get a fix, send it, sleep again). The project's own internal spec (`AGENTS.md`) and an earlier planning document (`MOD.md`) disagreed about which switch position meant which — resolved in favor of `AGENTS.md` as the authoritative source.
+This is where the physical mode switch (`BMS`) got wired up: switch HIGH means continuous tracking (LED on, broadcast every 30 seconds, never sleep); switch LOW means a low-power cycle (wake roughly once a minute, get a fix, send it, sleep again). 
 
 Getting the sleep half of this working on real hardware surfaced a genuine crash: deep sleep uses an observer pattern where multiple parts of the firmware register interest in "we're about to sleep, do your cleanup." LIA's own power-gating hook was registering *too early* — before the radio and GPS drivers had registered their own graceful-shutdown hooks — so peripheral power was being cut before those drivers could tell their chips to standby cleanly. The radio's own internal assertion caught the resulting SPI failure. The fix was purely about *when* to register the hook, not what it does; confirmed across two full real sleep/wake cycles afterward.
 
@@ -48,11 +48,15 @@ The low-power sleep cycle originally only woke on its own once-a-minute timer. P
 
 While confirming Phase 7 on real hardware, the RED LED's actual behavior didn't match its intended behavior — inverted, as if the wiring assumption behind the LED driver code was backwards. Since the BMS state machine driving it had already been independently proven correct (by its send/sleep timing, unrelated to the LED at all), the bug was isolated cleanly to the LED driver's own polarity assumption. Fixed by removing an unnecessary inversion, confirmed by eye afterward.
 
+## The wrong LED part
+
+The board's status indicator was designed around a true RGB LED (LCSC part `C397052`), but the first assembled batch has a different part soldered in its place: a two-color Red/Green LED (`C601680`), sharing the same 4-pin footprint but not the same die. Of that part's two colors, only Red ended up wired to a firmware-driven channel, so the assembled units only ever show RED regardless of what the design intends the LED to be capable of. This is a sourcing/assembly mistake to correct in a future PCB spin, not a firmware bug.
+
 ## A second hardware revision, and a rework that unified them
 
 A second physical board arrived with its accelerometer IC (an LSM6DSOXTR, sharing the I2C bus with a MAX17048 battery gauge) desoldered entirely — the original board's `SDA`/`SCL` lines to that chip had been crossed as manufactured, which caused I2C bus errors badly enough that I2C had to be left disabled on the original board altogether. Removing the IMU sidestepped the problem rather than fixing it, freeing the bus for the gauge alone. This became `lia_v2`, a second PlatformIO board variant sharing all the same LIA-specific firmware — the only difference is which pins get defined for I2C.
 
-Later, the original board got a solder rework crossing `SDA`/`SCL` back correctly, fixing the wiring defect at its source rather than working around it. With that rework applied, `lia_v1` also got I2C enabled, and — since the LSM6DSOXTR/MAX17048 chips report a chip-ID collision that Meshtastic's own detection labels under a different sensor name (`QMI8658`) than what stock Meshtastic actually knows how to drive — a small dedicated driver (`ImuMotionDriver`) was added to talk to the real chip directly rather than relying on stock support that silently doesn't apply here. Both boards ended up physically identical shortly after, once the same rework was applied to the second board too.
+Later, the original board got a solder rework crossing `SDA`/`SCL` back correctly, fixing the wiring defect at its source rather than working around it. With that rework applied, `lia_v1` also got I2C enabled, and — since the LSM6DSOXTR/MAX17048 chips report a chip-ID collision that Meshtastic's own detection labels under a different sensor name (`QMI8658`) than what stock Meshtastic actually knows how to drive — a small dedicated driver (`ImuMotionDriver`) was added to talk to the real chip directly rather than relying on stock support that silently doesn't apply here. Both boards ended up physically identical shortly after, once the same rework was applied to the second board too — at which point `lia_v2` as a separate firmware variant no longer served any purpose and was retired; a single `lia_v1` build now covers both, and the hardware-only battery/enclosure distinction between them is tracked instead as V1.0/V1.1 (see [Battery](/LIA/docs/firmware/battery/) and [Enclosure](/LIA/docs/hardware/enclosure/)).
 
 ## CommandService — a text-command interface, and two bugs it surfaced
 
@@ -62,6 +66,10 @@ With both boards now capable of reading the battery gauge and (on `lia_v1`) the 
 - **The battery gauge always reported ~0%,** even after fixing an initial suspicion (that reading the gauge right after resetting it was catching it before it settled). A standalone, Meshtastic-free test project (`firmware/tools/battery_test/`) built specifically to isolate this compared two independent read paths side by side — they agreed with each other exactly, and neither improved over time, which ruled out the reset theory. What they agreed on was a real, low cell voltage, independently confirmed with a multimeter. Not a bug at all — a genuinely low battery.
 
 The command syntax itself iterated a couple of times in response to how people actually typed commands — from underscores (`LED_ON`) to no separator (`LEDON`) to, finally, a plain space (`LED ON`), after real usage showed people naturally typing "Led off" and expecting it to just work.
+
+## Dropping the private channel for direct addressing
+
+The private-channel design worked, but it asked for something people kept getting wrong in practice: a specifically-named channel (`Test`) had to exist and be shared out-of-band before anything LIA-specific would do anything at all, and getting that wrong meant messages silently failing closed with no obvious signal why. Given that direct messages were already being special-cased to work around PKI encryption (see above), the channel lookup was doing less and less real work — a DM to a specific node already requires knowing/pairing with that node, and the official app's PKI encryption to that node's identity key isn't a weaker bar than possessing a channel's PSK. The channel concept (and its supporting `ChannelLookup` lookup-by-name helper) was removed entirely in favor of addressing everything — position broadcasts, charge-status messages, and all `CommandService` traffic — as a direct message to a single predefined target node (`MeshTargets.h`'s `kLiaTargetNode`, derived from that node's MAC address).
 
 ## What's next
 

@@ -29,21 +29,21 @@ power") fallback that never gets corrected later -- confirmed on real
 hardware (2026-07-22), even though the gauge is genuinely present and
 working.
 
-## MeshTargets.h / ChannelLookup
+## MeshTargets.h
 
 Shared configuration used by every service that reports to the configured
 target node: `kLiaTargetNode` (NodeNum, per `firmware/AGENTS.md` "Target
-Node") and `kLiaChannelName` (`"Test"`) live in `MeshTargets.h` -- the one
-place either is defined, so `TrackerService` and `ChargeStatusService` can't
-drift apart. `findLiaChannelIndexByName()` (`ChannelLookup.h/.cpp`) resolves
-a channel name to its index (0-7) fresh on every call rather than caching it,
-since the lookup is a cheap 8-entry scan and re-resolving means a runtime
-channel reconfiguration (e.g. the user adding "Test" after first boot, or
-moving it to a different slot) takes effect without a rebuild. Returns -1 if
-no channel with that name is currently configured; every caller fails closed
-on -1 (logs a warning, skips the send) rather than falling back to the
-default channel, since that fallback would silently defeat the whole point
-of restricting visibility to a named, private channel.
+Node") lives in `MeshTargets.h` -- the one place it's defined, so
+`TrackerService`, `ChargeStatusService`, and `CommandService` can't drift
+apart. Everything LIA-specific is a direct message (`p->to = kLiaTargetNode`)
+to this node, never a channel broadcast -- per explicit instruction
+(2026-07-26), superseding an earlier design that routed everything through a
+channel found by name (`kLiaChannelName`/`ChannelLookup.h/.cpp`, both
+removed). That design worked but required out-of-band channel setup and
+failed closed silently when misconfigured; a direct message already
+requires knowing/pairing with the target node and is commonly
+PKI-encrypted by the official app to that node's identity key, so it isn't
+a weaker bar than possessing a channel's PSK.
 
 ## TrackerService
 
@@ -55,15 +55,17 @@ does -- skips the send if there's no fix yet (lat/lon both zero) rather than
 sending a meaningless (0,0). The destination is `kLiaTargetNode`
 (`MeshTargets.h`).
 
-### Channel targeting
+### Direct-message targeting
 
-Position packets are sent on the channel named `kLiaChannelName` (`"Test"`),
-never on the default/primary channel. Meshtastic encrypts per-channel (not
+Position packets are sent as a direct message to `kLiaTargetNode`, never a
+broadcast on any channel. Meshtastic encrypts per-channel (not
 per-recipient) and `PositionModule` processes any overheard position packet
-promiscuously regardless of its `to` field, so sending on the public default
-channel would let *any* node on the mesh map this device -- sending on a
-private, PSK-protected channel instead restricts visibility to other users
-who have that same channel configured, per the user's request (2026-07-20).
+promiscuously regardless of its `to` field, so broadcasting on any channel
+would let *any* node holding that channel's PSK map this device -- a direct
+message to a specific node, commonly PKI-encrypted by the official
+app/firmware, restricts visibility to that one node instead, per explicit
+instruction (2026-07-26; see "MeshTargets.h" above for why this replaced an
+earlier private-channel design).
 
 Behaviour switches on `LiaBoard::instance().isBmsHigh()` (Phase 6):
 
@@ -108,9 +110,8 @@ nothing else needs to reference the instance, so no global pointer is kept
 
 ## ChargeStatusService
 
-Reports `LiaBoard`'s charger status to `kLiaTargetNode` as plain text
-(`TEXT_MESSAGE_APP`), on the same private `kLiaChannelName` channel
-`TrackerService` uses -- Phase 7, per explicit instruction (2026-07-22) to
+Reports `LiaBoard`'s charger status to `kLiaTargetNode` as a direct message
+(`TEXT_MESSAGE_APP`) -- Phase 7, per explicit instruction (2026-07-22) to
 send messages instead of the RED LED breathing/off behaviour
 `firmware/AGENTS.md` originally specified for this phase (see
 `firmware/AGENTS.md` "Phase 7").
@@ -129,35 +130,31 @@ corrected back against the real board behaviour.
 Constructed once from `lateInitVariant()` (`new ChargeStatusService();`) --
 same self-registration pattern as `TrackerService`, no global pointer kept.
 
-## CommandService (lia_v1 only)
+## CommandService
 
 Responds to short text commands, per explicit instruction (2026-07-22).
-`lia_v1` only: `IMU ON`/`IMU OFF` need the physical LSM6DSOXTR IMU that
-`lia_v2` removed.
 
-Accepts a command if it arrives **either** as a broadcast/DM on the private
-`kLiaChannelName` channel (fail-closed, same reasoning as `TrackerService`/
-`ChargeStatusService`), **or** as a direct message addressed to us
-specifically (`mp.to == nodeDB->getNodeNum()`), regardless of channel. The
-second case matters in practice: a DM sent through the official app is
+Accepts a command only if it arrives as a direct message addressed to us
+specifically (`mp.to == nodeDB->getNodeNum()`) -- per explicit instruction
+(2026-07-26), superseding an earlier design that also (or instead) gated on
+a private channel found by name. A DM sent through the official app is
 commonly PKI-encrypted, which bypasses the channel/PSK system entirely and
 reports `channel=0` no matter which channel was open when it was sent --
-confirmed on real hardware (2026-07-22), a channel-only check silently
-dropped DM-sent commands (`Ch=0x0 ... PKI` in the log) until this was added.
-Being addressed directly to our node already requires the sender to
-know/have paired with us, and PKI authenticates to their actual identity
-key, so accepting DMs isn't a weaker bar than channel-PSK possession.
+confirmed on real hardware (2026-07-22). Being addressed directly to our
+node already requires the sender to know/have paired with us, and PKI
+authenticates to their actual identity key, so this isn't a weaker bar than
+channel-PSK possession.
 
 Commands (case-insensitive and whitespace-normalized -- extra/mixed spaces
 or tabs between the two words of an ON/OFF command still match, e.g. "led
  off" or "Led  Off" both match `LED OFF`; unrecognized text is silently
-ignored, since this channel may carry normal chat too):
+ignored, since a DM to this device may carry normal chat too):
 
 | Command | Behaviour |
 | --- | --- |
 | `GPS` | Replies with the current `localPosition` lat/lon, or "No GPS fix yet". |
 | `BATTERY` | Replies with the MAX17048's charge percentage (see "Battery gauge + IMU" above for why this reads the gauge directly). |
-| `IMU ON` | Starts `ImuMotionDriver` (begin()s the sensor + arms its GPIO interrupt on first use) and polls it every 250ms; sends "Activity detected" once per motion event, addressed to `kLiaTargetNode` on the private channel (same destination `TrackerService`/`ChargeStatusService` use, not a reply to whoever sent `IMU ON`). |
+| `IMU ON` | Starts `ImuMotionDriver` (begin()s the sensor + arms its GPIO interrupt on first use) and polls it every 250ms; sends "Activity detected" once per motion event as a direct message to `kLiaTargetNode` (same destination `TrackerService`/`ChargeStatusService` use, not a reply to whoever sent `IMU ON`). |
 | `IMU OFF` | Detaches the interrupt; stops polling. |
 | `CHG ON` / `CHG OFF` | Toggles `ChargeStatusService::instance()->setChargingNotificationsEnabled()`. |
 | `STB ON` / `STB OFF` | Toggles `ChargeStatusService::instance()->setChargeCompleteNotificationsEnabled()`. |
@@ -169,9 +166,9 @@ concatenated with no separator (`IMUON`) before settling on a space, per
 explicit instruction (2026-07-24) -- real usage showed people naturally
 type "Led off" with a space.
 
-Replies to a command go back as a DM to whoever sent it, on the channel the
-request arrived on (`isPromiscuous = true`, so both DMs and broadcasts on
-the private channel are seen).
+Replies to a command go back as a direct message to whoever sent it
+(`isPromiscuous = true` so the module sees all traffic on its port, but only
+messages addressed directly to us are acted on -- see above).
 
 `ChargeStatusService::instance()`/`TrackerService::instance()` are
 self-registering static pointers set in each class's own constructor (not a

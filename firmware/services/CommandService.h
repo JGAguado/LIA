@@ -5,18 +5,17 @@
 #include "concurrency/OSThread.h"
 #include "lia/ImuMotionDriver.h"
 
-/// Responds to short text commands sent on the private kLiaChannelName
-/// channel (see MeshTargets.h) -- lia_v1 only, since "IMU ON"/"IMU OFF" need
-/// the physical LSM6DSOXTR IMU that lia_v2 removed. Replies go back as a DM
-/// to whoever sent the command, on the channel it arrived on -- promiscuous,
-/// so both a direct message and a broadcast on that channel work.
+/// Responds to short text commands sent as a direct message to
+/// kLiaTargetNode (see MeshTargets.h) -- per explicit instruction
+/// (2026-07-26), superseding an earlier private-channel-name design. Replies
+/// go back as a DM to whoever sent the command.
 ///
 /// Supported commands (case-insensitive, whitespace-normalized -- see
 /// handleReceived() -- so "led  off" / "Led Off" all match "LED OFF", see
 /// handleCommand()): GPS, BATTERY, IMU ON, IMU OFF, CHG ON, CHG OFF,
 /// STB ON, STB OFF, LED ON, LED OFF, HELP.
-/// Unrecognized text is silently ignored, since this channel may carry
-/// normal chat too, not just commands.
+/// Unrecognized text is silently ignored, since a DM to this device may
+/// carry normal chat too, not just commands.
 ///
 /// Construct once from lateInitVariant(), after TrackerService (whose
 /// instance() this reaches for LED ON/OFF) and ChargeStatusService (whose
@@ -42,7 +41,7 @@ class CommandService : public SinglePortModule, private concurrency::OSThread
     static constexpr uint32_t kIdlePollMs = 5000;
 
     void handleCommand(const meshtastic_MeshPacket &mp, const char *command);
-    void sendText(NodeNum to, uint8_t channel, const char *text);
+    void sendText(NodeNum to, const char *text);
     // Reads the gauge's SOC register directly over I2C -- deliberately not
     // via Adafruit_MAX17048::begin(), which sends the chip a hardware reset
     // command (0x5400) before every read; reading cellPercent() right after

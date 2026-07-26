@@ -19,8 +19,8 @@
 ## Features
 
 - Long-range LoRa communication over the open Meshtastic protocol
-- GPS/GNSS location tracking, sent only on a private, PSK-protected channel — not visible to the wider public mesh
-- A physical mode switch: continuous tracking (LED on, position every 30s) or a low-power sleep cycle (wake roughly once a minute, get a fix, report it, sleep again)
+- GPS/GNSS location tracking, sent only as a direct message to a predefined target node — not visible to the wider public mesh
+- A physical 3-position mode switch: continuous tracking (LED on, position every 30s), a low-power sleep cycle (wake roughly once a minute, get a fix, report it, sleep again), or fully OFF (cuts power to the MCU while still allowing the battery to charge)
 - A text-command interface over the mesh: query position/battery on demand, toggle charge/motion notifications, override the status LED — see [Meshtastic Configuration](https://jgaguado.github.io/LIA/docs/firmware/meshtastic-configuration/)
 - Deep-sleep, low-power firmware with real hardware wake sources (timer, mode-switch flip, charger plug-in)
 - Subscription-free — no cloud backend required
@@ -36,17 +36,19 @@
 - u-blox SAM-M10Q GNSS module
 - MAX17048 battery fuel gauge
 
-**Two board/battery revisions**
+**Two hardware revisions, one firmware**
 
-- **V1** — 18650 Li-ion cell (3500 mAh) with magnetic pogo charging, plus an LSM6DSOXTR 6-axis IMU for motion detection.
-- **V2** — a 50×37×4 mm pouch cell (1000 mAh) instead, trading capacity for a much more compact enclosure; no IMU populated.
+Both revisions carry the same reworked LSM6DSOXTR 6-axis IMU and run the identical `lia_v1` firmware — the only difference is the battery/enclosure:
+
+- **V1.0** — 18650 Li-ion cell (3500 mAh) with magnetic pogo charging.
+- **V1.1** — a 50×37×4 mm pouch cell (1000 mAh) instead, trading capacity for a much more compact enclosure.
 
 **Antennas**
 
-- Internal FPC LoRa antenna
+- Internal FPC LoRa antenna, or alternatively a standard omnidirectional linear 868/915 MHz antenna (e.g. [Seeed's LoRa Antenna Kit](https://www.seeedstudio.com/LoRa-Antenna-Kit-for-reTerminal-DM-p-5714.html))
 - Ceramic GNSS patch antenna
 
-See [Hardware documentation](https://jgaguado.github.io/LIA/docs/hardware/pcb/) for full details, and [Enclosure](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for the three enclosure variants that pair with these boards.
+See [Hardware documentation](https://jgaguado.github.io/LIA/docs/hardware/pcb/) for full details, and [Enclosure](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for the enclosure variants that pair with these boards.
 
 ## Software Stack
 
@@ -60,7 +62,7 @@ LIA/
 ├── website/       Astro + Starlight documentation & marketing site
 ├── firmware/       Meshtastic-based firmware (board variants, services, drivers, build tooling)
 ├── hardware/       KiCad project, PCB renders, schematics, BOM, production files
-├── enclosure/       Enclosure CAD (gitignored native files), STEP/STL exports, renders — V1R1/, V1R2/, V2R1/
+├── enclosure/       Enclosure CAD (gitignored native files), STEP/STL exports, renders — V1.0-Detachable/, V1.0-Fixed/, V1.1-Fixed/
 ├── mobile/         Companion mobile app (planned)
 ├── scripts/       Repo maintenance and tooling scripts
 ├── .github/       CI/CD workflows, issue & PR templates
@@ -84,7 +86,7 @@ npm run dev
 
 **Hardware:** open [`hardware/kicad/LIA.kicad_pro`](hardware/kicad/LIA.kicad_pro) in [KiCad](https://www.kicad.org/) 8+.
 
-**Enclosure:** three versions — [`enclosure/V1R1/`](enclosure/V1R1), [`enclosure/V1R2/`](enclosure/V1R2), [`enclosure/V2R1/`](enclosure/V2R1) — each with its own `step/`/`stl/` exports and `drawings/`; no CAD license required to view or print them. See [Enclosure docs](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for what differs between them.
+**Enclosure:** three versions — [`enclosure/V1.0-Detachable/`](enclosure/V1.0-Detachable), [`enclosure/V1.0-Fixed/`](enclosure/V1.0-Fixed), [`enclosure/V1.1-Fixed/`](enclosure/V1.1-Fixed) — each with its own `step/`/`stl/` exports and `drawings/`; no CAD license required to view or print them. See [Enclosure docs](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for what differs between them.
 
 **Firmware:** see [`firmware/README.md`](firmware/README.md) and the [Getting Started guide](https://jgaguado.github.io/LIA/docs/getting-started/).
 
@@ -98,8 +100,8 @@ LIA is released under **[CC BY-NC-SA 4.0](LICENSE)** (Attribution-NonCommercial-
 
 ## Roadmap
 - [x] Draft project requirements and design goals
-- [x] Complete first hardware revision (V1) and a second, more compact revision (V2)
-- [x] Complete first enclosure revisions — V1R1 (detachable), V1R2, and V2R1 (fixed-mount)
+- [x] Complete first hardware revision (V1.0) and a second, more compact revision (V1.1)
+- [x] Complete first enclosure revisions — V1.0-Detachable, V1.0-Fixed, and V1.1-Fixed
 - [x] Manufacture and assemble first batch of boards
 - [x] Smoke-test and validate hardware (radio, GPS, charging, battery gauge, IMU)
 - [x] Release first firmware — see [Development History](https://jgaguado.github.io/LIA/docs/development-history/) for the phase-by-phase log

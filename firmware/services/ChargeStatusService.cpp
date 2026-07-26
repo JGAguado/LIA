@@ -1,6 +1,5 @@
 #include "ChargeStatusService.h"
 
-#include "ChannelLookup.h"
 #include "MeshService.h"
 #include "MeshTargets.h"
 #include "lia/LiaBoard.h"
@@ -36,17 +35,8 @@ int32_t ChargeStatusService::runOnce()
 
 void ChargeStatusService::sendText(const char *message)
 {
-    int16_t channelIndex = findLiaChannelIndexByName(kLiaChannelName);
-    if (channelIndex < 0) {
-        // Fail closed, same reasoning as TrackerService: never fall back to
-        // the default/public channel just because "Test" isn't configured.
-        LOG_WARN("ChargeStatus: no channel named \"%s\" configured, skipping send (\"%s\")", kLiaChannelName, message);
-        return;
-    }
-
     meshtastic_MeshPacket *p = allocDataPacket();
     p->to = kLiaTargetNode;
-    p->channel = (uint8_t)channelIndex;
     p->want_ack = false;
     p->decoded.want_response = false;
 
@@ -57,6 +47,5 @@ void ChargeStatusService::sendText(const char *message)
     memcpy(p->decoded.payload.bytes, message, len);
 
     service->sendToMesh(p);
-    LOG_INFO("ChargeStatus: sent \"%s\" to 0x%08x on channel %d (\"%s\")", message, kLiaTargetNode, channelIndex,
-              kLiaChannelName);
+    LOG_INFO("ChargeStatus: sent \"%s\" to 0x%08x", message, kLiaTargetNode);
 }

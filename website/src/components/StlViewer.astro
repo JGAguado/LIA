@@ -33,6 +33,14 @@ const id = `stl-${Math.random().toString(36).slice(2, 9)}`;
   import { STLLoader } from 'three/addons/loaders/STLLoader.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+  // Browsers cap the number of simultaneous WebGL contexts (commonly
+  // 8-16); a page with more <StlViewer> instances than that silently loses
+  // the earliest-created contexts as later ones are requested, so only the
+  // last few actually render. Each viewer is therefore only ever created
+  // while its container is on screen (IntersectionObserver) and fully torn
+  // down -- renderer disposed, context released, animation loop stopped --
+  // the moment it scrolls back out, so an arbitrary number of viewers on
+  // one page never exceeds the browser's live-context limit at once.
   function initViewer(container: HTMLElement) {
     const src = container.dataset.src!;
     const color = container.dataset.color ?? '#2eb67d';
@@ -46,6 +54,7 @@ const id = `stl-${Math.random().toString(36).slice(2, 9)}`;
 
     const resize = () => {
       const { clientWidth, clientHeight } = container;
+      if (clientWidth === 0 || clientHeight === 0) return;
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
@@ -87,16 +96,52 @@ const id = `stl-${Math.random().toString(36).slice(2, 9)}`;
     window.addEventListener('resize', resize);
     resize();
 
+    let frameId = 0;
     (function animate() {
-      requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     })();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', resize);
+      controls.dispose();
+      renderer.dispose();
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose();
+          const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+          materials.forEach((m) => m.dispose());
+        }
+      });
+      container.replaceChildren();
+    };
   }
 
-  document
-    .querySelectorAll<HTMLElement>('.lia-stl__canvas')
-    .forEach((container) => initViewer(container));
+  const teardowns = new WeakMap<Element, () => void>();
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const container = entry.target as HTMLElement;
+        if (entry.isIntersecting) {
+          if (!teardowns.has(container)) {
+            teardowns.set(container, initViewer(container));
+          }
+        } else {
+          const teardown = teardowns.get(container);
+          if (teardown) {
+            teardown();
+            teardowns.delete(container);
+          }
+        }
+      }
+    },
+    { rootMargin: '200px' },
+  );
+
+  document.querySelectorAll<HTMLElement>('.lia-stl__canvas').forEach((container) => observer.observe(container));
 </script>
 
 <style>

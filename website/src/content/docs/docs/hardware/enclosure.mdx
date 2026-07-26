@@ -7,100 +7,104 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 import Gallery from '../../../../components/Gallery.astro';
 import StlViewer from '../../../../components/StlViewer.astro';
 
-import v1r1Assembly1 from '../../../../../../enclosure/V1R1/renders/assembly-1.jpg';
-import v1r1Assembly2 from '../../../../../../enclosure/V1R1/renders/assembly-2.jpg';
-import v1r1Explode from '../../../../../../enclosure/V1R1/renders/explode-view.jpg';
-import v1r2Assembly1 from '../../../../../../enclosure/V1R2/renders/assembly-1.jpg';
-import v1r2Assembly2 from '../../../../../../enclosure/V1R2/renders/assembly-2.jpg';
-import v1r2Explode from '../../../../../../enclosure/V1R2/renders/explode-view.jpg';
-import v2r1Assembly1 from '../../../../../../enclosure/V2R1/renders/assembly-1.jpg';
-import v2r1Assembly2 from '../../../../../../enclosure/V2R1/renders/assembly-2.jpg';
-import v2r1Explode from '../../../../../../enclosure/V2R1/renders/explode-view.jpg';
+import v10dAssembly1 from '../../../../../../enclosure/V1.0-Detachable/renders/assembly-1.jpg';
+import v10dAssembly2 from '../../../../../../enclosure/V1.0-Detachable/renders/assembly-2.jpg';
+import v10dExplode from '../../../../../../enclosure/V1.0-Detachable/renders/explode-view.jpg';
+import v10fAssembly1 from '../../../../../../enclosure/V1.0-Fixed/renders/assembly-1.jpg';
+import v10fAssembly2 from '../../../../../../enclosure/V1.0-Fixed/renders/assembly-2.jpg';
+import v10fExplode from '../../../../../../enclosure/V1.0-Fixed/renders/explode-view.jpg';
+import v11fAssembly1 from '../../../../../../enclosure/V1.1-Fixed/renders/assembly-1.jpg';
+import v11fAssembly2 from '../../../../../../enclosure/V1.1-Fixed/renders/assembly-2.jpg';
+import v11fExplode from '../../../../../../enclosure/V1.1-Fixed/renders/explode-view.jpg';
 
 There are three enclosure designs, tracking two board revisions and two mounting styles. All three clip onto a standard collar strap and have a separate window over the status LED.
 
+:::note
+**V1.0** and **V1.1** are identical at the firmware/electronics level. The only difference between them is the battery they're built around (see [Battery](/LIA/docs/firmware/battery/)), which is what actually drives the enclosure split below.
+:::
+
 | Version | Fits board | Battery | Mounting |
 | --- | --- | --- | --- |
-| **V1R1** | V1 | 18650 Li-ion, 3500 mAh | Detachable — clips onto a separate collar piece via a plug-latch mechanism |
-| **V1R2** | V1 | 18650 Li-ion, 3500 mAh | Fixed — mounts directly on the collar, not easily detachable |
-| **V2R1** | V2 | 50×37×4 mm pouch cell, 1000 mAh | Fixed — mounts directly on the collar, same style as V1R2 |
+| **V1.0-Detachable** | V1.0 | 18650 Li-ion, 3500 mAh | Detachable — clips onto a separate collar piece via a plug-latch mechanism |
+| **V1.0-Fixed** | V1.0 | 18650 Li-ion, 3500 mAh | Fixed — mounts directly on the collar, not easily detachable |
+| **V1.1-Fixed** | V1.1 | 50×37×4 mm pouch cell, 1000 mAh | Fixed — mounts directly on the collar, same style as V1.0-Fixed |
 
-The V1/V2 **board** split is about the battery gauge/IMU I2C rework (see [Battery](/LIA/docs/firmware/battery/) and [Accelerometer](/LIA/docs/firmware/accelerometer/)), not the enclosure — the enclosure split follows the battery each board is paired with. The bigger 18650 cell needs more internal volume, which is what V1R1/V1R2 are sized for; V2R1 is built around the smaller, thinner pouch cell instead, trading capacity for a noticeably more compact shell. V1R2 and V2R1 share the fixed, non-detachable mounting style — V1R1 is the only one with the separate, detachable collar piece.
+The bigger 18650 cell needs more internal volume, which is what the V1.0 designs are sized for; V1.1-Fixed is built around the smaller, thinner pouch cell instead, trading capacity for a noticeably more compact shell. V1.0-Fixed and V1.1-Fixed share the fixed, non-detachable mounting style — V1.0-Detachable is the only one with the separate, detachable collar piece.
 
 <Tabs>
-  <TabItem label="V1R1">
+  <TabItem label="V1.0-Detachable">
 
 Detachable: the board enclosure clips onto a separate collar piece through a plug-latch mechanism, so the tracker can be removed from the collar without undoing the collar strap itself. Sized for the 18650 cell.
 
 <Gallery
-  id="enclosure-v1r1-renders"
+  id="enclosure-v10d-renders"
   images={[
-    { src: v1r1Assembly1, alt: 'V1R1 enclosure assembly render, closed' },
-    { src: v1r1Assembly2, alt: 'V1R1 enclosure assembly render, alternate angle' },
-    { src: v1r1Explode, alt: 'V1R1 enclosure exploded view showing internal parts' },
+    { src: v10dAssembly1, alt: 'V1.0-Detachable enclosure assembly render, closed' },
+    { src: v10dAssembly2, alt: 'V1.0-Detachable enclosure assembly render, alternate angle' },
+    { src: v10dExplode, alt: 'V1.0-Detachable enclosure exploded view showing internal parts' },
   ]}
 />
 
 Drag to rotate, scroll to zoom.
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
-  <StlViewer src="/LIA/generated/stl/v1r1/Top_enclosure.stl" label="Top shell" />
-  <StlViewer src="/LIA/generated/stl/v1r1/Bottom_enclosure.stl" label="Bottom shell" />
-  <StlViewer src="/LIA/generated/stl/v1r1/Window.stl" label="Window" />
-  <StlViewer src="/LIA/generated/stl/v1r1/Top_collar.stl" label="Collar top" />
-  <StlViewer src="/LIA/generated/stl/v1r1/Bottom_collar.stl" label="Collar bottom" />
-  <StlViewer src="/LIA/generated/stl/v1r1/Latch.stl" label="Latch" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Top_enclosure.stl" label="Top shell" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Bottom_enclosure.stl" label="Bottom shell" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Window.stl" label="Window" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Top_collar.stl" label="Collar top" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Bottom_collar.stl" label="Collar bottom" />
+  <StlViewer src="/LIA/generated/stl/v1.0-detachable/Latch.stl" label="Latch" />
 </div>
 
   </TabItem>
-  <TabItem label="V1R2">
+  <TabItem label="V1.0-Fixed">
 
-Compatible with the V1 board (same 18650 cell), but the shell mounts directly on the collar instead of clipping onto a separate detachable piece — no plug-latch mechanism, no separate collar part.
+Compatible with the V1.0 board (same 18650 cell), but the shell mounts directly on the collar instead of clipping onto a separate detachable piece — no plug-latch mechanism, no separate collar part.
 
 <Gallery
-  id="enclosure-v1r2-renders"
+  id="enclosure-v10f-renders"
   images={[
-    { src: v1r2Assembly1, alt: 'V1R2 enclosure assembly render, closed' },
-    { src: v1r2Assembly2, alt: 'V1R2 enclosure assembly render, alternate angle' },
-    { src: v1r2Explode, alt: 'V1R2 enclosure exploded view showing internal parts' },
+    { src: v10fAssembly1, alt: 'V1.0-Fixed enclosure assembly render, closed' },
+    { src: v10fAssembly2, alt: 'V1.0-Fixed enclosure assembly render, alternate angle' },
+    { src: v10fExplode, alt: 'V1.0-Fixed enclosure exploded view showing internal parts' },
   ]}
 />
 
 Drag to rotate, scroll to zoom.
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
-  <StlViewer src="/LIA/generated/stl/v1r2/Top_enclosure.stl" label="Top shell" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Bottom_enclosure.stl" label="Bottom shell" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Bottom_enclosure_2.stl" label="Bottom shell, alternate" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Window.stl" label="Window" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Top_collar.stl" label="Collar top" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Bottom_collar.stl" label="Collar bottom" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Latch.stl" label="Latch" />
-  <StlViewer src="/LIA/generated/stl/v1r2/Antenna_elbow.stl" label="Antenna elbow" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Top_enclosure.stl" label="Top shell" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Bottom_enclosure.stl" label="Bottom shell" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Bottom_enclosure_2.stl" label="Bottom shell, alternate" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Window.stl" label="Window" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Top_collar.stl" label="Collar top" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Bottom_collar.stl" label="Collar bottom" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Latch.stl" label="Latch" />
+  <StlViewer src="/LIA/generated/stl/v1.0-fixed/Antenna_elbow.stl" label="Antenna elbow" />
 </div>
 
   </TabItem>
-  <TabItem label="V2R1">
+  <TabItem label="V1.1-Fixed">
 
-Compatible with the V2 board and its smaller 50×37×4 mm / 1000 mAh pouch cell, which allows a noticeably more compact shell than the 18650-based V1 designs — the tradeoff is less capacity, so shorter runtime between charges (see [Power Management](/LIA/docs/firmware/power-management/)). Mounts directly on the collar, same fixed style as V1R2.
+Compatible with the V1.1 board and its smaller 50×37×4 mm / 1000 mAh pouch cell, which allows a noticeably more compact shell than the 18650-based V1.0 designs — the tradeoff is less capacity, so shorter runtime between charges (see [Power Management](/LIA/docs/firmware/power-management/)). Mounts directly on the collar, same fixed style as V1.0-Fixed.
 
 <Gallery
-  id="enclosure-v2r1-renders"
+  id="enclosure-v11f-renders"
   images={[
-    { src: v2r1Assembly1, alt: 'V2R1 enclosure assembly render, closed' },
-    { src: v2r1Assembly2, alt: 'V2R1 enclosure assembly render, alternate angle' },
-    { src: v2r1Explode, alt: 'V2R1 enclosure exploded view showing internal parts' },
+    { src: v11fAssembly1, alt: 'V1.1-Fixed enclosure assembly render, closed' },
+    { src: v11fAssembly2, alt: 'V1.1-Fixed enclosure assembly render, alternate angle' },
+    { src: v11fExplode, alt: 'V1.1-Fixed enclosure exploded view showing internal parts' },
   ]}
 />
 
 Drag to rotate, scroll to zoom.
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
-  <StlViewer src="/LIA/generated/stl/v2r1/Top_enclosure.stl" label="Top shell" />
-  <StlViewer src="/LIA/generated/stl/v2r1/Bottom_enclosure.stl" label="Bottom shell" />
-  <StlViewer src="/LIA/generated/stl/v2r1/Window.stl" label="Window" />
-  <StlViewer src="/LIA/generated/stl/v2r1/Collar_bridge.stl" label="Collar bridge" />
-  <StlViewer src="/LIA/generated/stl/v2r1/Antenna_elbow.stl" label="Antenna elbow" />
+  <StlViewer src="/LIA/generated/stl/v1.1-fixed/Top_enclosure.stl" label="Top shell" />
+  <StlViewer src="/LIA/generated/stl/v1.1-fixed/Bottom_enclosure.stl" label="Bottom shell" />
+  <StlViewer src="/LIA/generated/stl/v1.1-fixed/Window.stl" label="Window" />
+  <StlViewer src="/LIA/generated/stl/v1.1-fixed/Collar_bridge.stl" label="Collar bridge" />
+  <StlViewer src="/LIA/generated/stl/v1.1-fixed/Antenna_elbow.stl" label="Antenna elbow" />
 </div>
 
   </TabItem>

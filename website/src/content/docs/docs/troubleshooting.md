@@ -35,7 +35,8 @@ pull-ups and whether the IMU/fuel gauge are actually populated on your board).
 - Review the broadcast interval and duty cycle in [Power Management](/LIA/docs/firmware/power-management/) — frequent position broadcasts cost real battery life.
 - Confirm deep sleep is actually being entered (some debug/logging builds keep peripherals awake).
 
-> [!TIP]
-> If none of this helps, open an issue on [GitHub](https://github.com/JGAguado/LIA/issues) with your firmware version, region setting, and a description of what you're seeing.
+:::tip
+If none of this helps, open an issue on [GitHub](https://github.com/JGAguado/LIA/issues) with your firmware version, region setting, and a description of what you're seeing.
+:::
 
 See also: [FAQ](/LIA/docs/faq/).

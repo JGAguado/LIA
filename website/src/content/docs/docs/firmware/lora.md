@@ -3,7 +3,7 @@ title: LoRa
 description: Radio hardware and regional configuration for LIA's LoRa link.
 ---
 
-LIA uses a Semtech SX1262 LoRa transceiver with an external FPC antenna, following the same regional frequency plans as Meshtastic itself.
+LIA uses a Semtech SX1262 LoRa transceiver embedded on a [Seeed Studio Wio-SX1262](https://www.seeedstudio.com/Wio-SX1262-LF-Wireless-Module-p-6659.html) with an IPEX port for an external antenna — see [PCB](/LIA/docs/hardware/pcb/#antennas).
 
 ## Region settings
 
@@ -20,8 +20,9 @@ Meshtastic requires a region to be set before the radio will transmit. Set it to
 meshtastic --set lora.region EU_868
 ```
 
-> [!CAUTION]
-> Transmitting outside your region's permitted frequency plan can be illegal. Always set the correct region for your country before use.
+:::danger
+Transmitting outside your region's permitted frequency plan can be illegal. Always set the correct region for your country before use.
+:::
 
 ## Range expectations
 
