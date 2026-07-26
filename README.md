@@ -1,5 +1,7 @@
 [![License: CC BY-NC-SA 4.0][license-shield]](LICENSE)
 [![Project Maintenance][maintenance-shield]][maintenance]
+[![Powered by Meshtastic][meshtastic-shield]][meshtastic]
+[![Documentation][docs-shield]][docs]
 
 <p align="center">
     <picture>
@@ -13,6 +15,12 @@
 **LIA** is an open-source, low-power pet and asset tracker built on top of [Meshtastic](https://meshtastic.org/) and LoRa mesh networking. It's designed to be a compact, long-range, subscription-free tracking device that keeps working off-grid — no cell coverage, no monthly fee, no cloud dependency.
 
 📖 **[Read the full documentation](https://jgaguado.github.io/LIA/)**
+
+<p align="center">
+    <a href="https://youtu.be/8NeL7x7pOoo">
+      <img src="https://raw.githubusercontent.com/JGAguado/LIA/main/website/src/assets/brand/Header.png" alt="LIA demo video — click to watch on YouTube" width="640">
+    </a>
+</p>
 
 ---
 
@@ -116,3 +124,7 @@ LIA is an experimental open-source project and should not be considered a guaran
 [license-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-J.%20G.%20Aguado-2e48a7.svg?style=for-the-badge
 [maintenance]: https://github.com/JGAguado
+[meshtastic-shield]: https://img.shields.io/badge/Powered%20by-Meshtastic-67EA94.svg?style=for-the-badge
+[meshtastic]: https://meshtastic.org/
+[docs-shield]: https://img.shields.io/badge/Documentation-online-2e48a7.svg?style=for-the-badge
+[docs]: https://jgaguado.github.io/LIA/

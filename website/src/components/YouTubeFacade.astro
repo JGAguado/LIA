@@ -1,17 +1,26 @@
 ---
 // Click-to-load facade: no YouTube script, cookies, or network request
 // until the visitor explicitly chooses to play the video.
+import { Image } from 'astro:assets';
+
 interface Props {
   id: string;
   title: string;
+  poster?: ImageMetadata;
 }
 
-const { id, title } = Astro.props;
+const { id, title, poster } = Astro.props;
 const thumbnail = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 ---
 
 <div class="lia-yt-facade" data-video-id={id} data-title={title}>
-  <img src={thumbnail} alt="" loading="lazy" />
+  {
+    poster ? (
+      <Image src={poster} alt="" widths={[480, 960]} sizes="100vw" />
+    ) : (
+      <img src={thumbnail} alt="" loading="lazy" />
+    )
+  }
   <button type="button" aria-label={`Play video: ${title}`}>
     <svg viewBox="0 0 68 48" width="68" height="48" aria-hidden="true">
       <path
