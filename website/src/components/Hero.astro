@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import YouTubeFacade from './YouTubeFacade.astro';
 import headerPhoto from '../assets/brand/Header.png';
 import logoLight from '../assets/brand/Primary light.png';
 import logoDark from '../assets/brand/Primary dark.png';
@@ -31,13 +31,7 @@ const base = import.meta.env.BASE_URL;
     </div>
   </div>
   <div class="lia-hero__media">
-    <Image
-      src={headerPhoto}
-      alt="LIA tracker attached to a dog's collar outdoors"
-      widths={[480, 960, 1440]}
-      sizes="(min-width: 1024px) 50vw, 100vw"
-      priority
-    />
+    <YouTubeFacade id="8NeL7x7pOoo" title="LIA demo video" poster={headerPhoto} autoplay />
   </div>
 </section>
 
@@ -111,9 +105,7 @@ const base = import.meta.env.BASE_URL;
     color: var(--lia-fg);
   }
 
-  .lia-hero__media :global(img) {
-    width: 100%;
-    height: auto;
+  .lia-hero__media :global(.lia-yt-facade) {
     border-radius: 1.25rem;
     box-shadow: 0 20px 60px -20px rgb(15 23 32 / 35%);
   }
