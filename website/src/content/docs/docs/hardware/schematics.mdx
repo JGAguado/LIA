@@ -1,0 +1,19 @@
+---
+title: Schematics
+description: Full schematic PDF for the LIA main board.
+---
+
+import PdfEmbed from '../../../../components/PdfEmbed.astro';
+
+The schematic below is exported directly from the KiCad project in [`hardware/kicad/`](https://github.com/JGAguado/LIA/tree/main/hardware/kicad).
+
+<PdfEmbed src="/LIA/files/LIA-schematic.pdf" title="LIA schematic" />
+
+## Reference designs
+
+Some subcircuits (battery charging, buck-boost regulation) are adapted from published reference designs. Source references are kept under [`hardware/schematics/references/`](https://github.com/JGAguado/LIA/tree/main/hardware/schematics/references) in the repository.
+
+> [!WARNING]
+> The schematic is a work in progress and has not yet been through a formal design review. If you build from it, double-check power and charging circuitry before connecting a battery.
+
+See also: [PCB](/LIA/docs/hardware/pcb/) and [BOM](/LIA/docs/hardware/bom/).

@@ -1,0 +1,31 @@
+---
+interface Props {
+  src: string;
+  poster?: string;
+  caption?: string;
+}
+
+const { src, poster, caption } = Astro.props;
+---
+
+<figure class="lia-video">
+  <video controls preload="metadata" poster={poster}>
+    <source src={src} />
+    Your browser doesn't support embedded video. <a href={src}>Download the video</a> instead.
+  </video>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .lia-video video {
+    display: block;
+    width: 100%;
+    border-radius: 0.75rem;
+  }
+  .lia-video figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    text-align: center;
+  }
+</style>

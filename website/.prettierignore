@@ -1,0 +1,7 @@
+dist/
+.astro/
+node_modules/
+public/generated/
+src/content/docs/**/*.md
+pnpm-lock.yaml
+package-lock.json

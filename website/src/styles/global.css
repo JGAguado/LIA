@@ -1,0 +1,89 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Self-hosted brand fonts — no third-party font requests. */
+@import '@fontsource-variable/inter';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
+
+@import 'katex/dist/katex.min.css';
+
+/*
+ * LIA brand theme — derived from Style/Styleguide_1.png:
+ * Deep Charcoal #0F1720, Mesh Green #2EB67D, Pale Mint #E6F6EF,
+ * Stone #F2F4F7, Off White #FFFFFF. Sora for headings, Inter for body.
+ */
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', sans-serif;
+  --font-heading: 'Sora', 'Inter Variable', sans-serif;
+
+  --color-accent-50: #eafbf3;
+  --color-accent-100: #d2f5e4;
+  --color-accent-200: #a8eccb;
+  --color-accent-300: #79dfae;
+  --color-accent-400: #4ccb92;
+  --color-accent-500: #2eb67d;
+  --color-accent-600: #21966a;
+  --color-accent-700: #187657;
+  --color-accent-800: #135d46;
+  --color-accent-900: #0f4a39;
+  --color-accent-950: #082a20;
+
+  --color-gray-50: #ffffff;
+  --color-gray-100: #f2f4f7;
+  --color-gray-200: #e4e7ec;
+  --color-gray-300: #cdd3db;
+  --color-gray-400: #9aa4b2;
+  --color-gray-500: #707b8b;
+  --color-gray-600: #4e5867;
+  --color-gray-700: #37404d;
+  --color-gray-800: #232b36;
+  --color-gray-900: #161d26;
+  --color-gray-950: #0f1720;
+
+  --color-mint: #e6f6ef;
+}
+
+:root {
+  --sl-font: var(--font-sans);
+
+  /* Marketing-page-only theme tokens (Starlight docs pages manage their
+     own light/dark state separately via --sl-color-*). These follow the
+     visitor's OS color scheme — there's no manual toggle on the landing page. */
+  --lia-bg: var(--color-gray-50);
+  --lia-surface: var(--color-gray-100);
+  --lia-fg: var(--color-gray-950);
+  --lia-fg-muted: var(--color-gray-600);
+  --lia-border: var(--color-gray-200);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --lia-bg: var(--color-gray-950);
+    --lia-surface: var(--color-gray-900);
+    --lia-fg: var(--color-gray-50);
+    --lia-fg-muted: var(--color-gray-400);
+    --lia-border: var(--color-gray-800);
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.hero h1 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+/* Brand accent selection/focus, matching the styleguide's "usage" guidance. */
+::selection {
+  background-color: var(--color-accent-200);
+  color: var(--color-gray-950);
+}

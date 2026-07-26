@@ -1,0 +1,143 @@
+---
+import '../styles/global.css';
+import logoLight from '../assets/brand/Primary light.png';
+import logoDark from '../assets/brand/Primary dark.png';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href={`${base}/favicon.png`} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class="font-sans antialiased">
+    <header class="lia-header">
+      <a href={`${base}/`} class="lia-header__brand" aria-label="LIA home">
+        <picture>
+          <source srcset={encodeURI(logoDark.src)} media="(prefers-color-scheme: dark)" />
+          <img src={encodeURI(logoLight.src)} alt="LIA" height="28" />
+        </picture>
+      </a>
+      <nav class="lia-header__nav">
+        <a href={`${base}/docs/`}>Docs</a>
+        <a href={`${base}/docs/getting-started/`}>Getting Started</a>
+        <a
+          href="https://github.com/JGAguado/LIA"
+          aria-label="LIA on GitHub"
+          class="lia-header__icon-link"
+        >
+          <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+            ></path>
+          </svg>
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="lia-footer">
+      <p>
+        &copy; {new Date().getFullYear()} LIA. Open-source hardware and firmware, CC BY-NC-SA 4.0.
+      </p>
+      <nav class="lia-footer__nav">
+        <a href={`${base}/docs/license/`}>License</a>
+        <a href={`${base}/docs/contributing/`}>Contributing</a>
+        <a href="https://github.com/JGAguado/LIA">GitHub</a>
+      </nav>
+    </footer>
+  </body>
+</html>
+
+<style>
+  body {
+    background: var(--lia-bg);
+    color: var(--lia-fg);
+  }
+
+  .lia-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: color-mix(in srgb, var(--lia-bg) 85%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--lia-border);
+  }
+
+  .lia-header__brand {
+    display: flex;
+    align-items: center;
+  }
+
+  .lia-header__brand img {
+    display: block;
+    width: auto;
+  }
+
+  .lia-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .lia-header__nav a {
+    color: var(--lia-fg-muted);
+    text-decoration: none;
+  }
+
+  .lia-header__nav a:hover {
+    color: var(--color-accent-600);
+  }
+
+  .lia-header__icon-link {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .lia-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 3rem 1.5rem;
+    border-top: 1px solid var(--lia-border);
+    color: var(--lia-fg-muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .lia-footer__nav {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .lia-footer__nav a {
+    color: var(--lia-fg-muted);
+    text-decoration: none;
+  }
+
+  .lia-footer__nav a:hover {
+    color: var(--color-accent-600);
+  }
+</style>

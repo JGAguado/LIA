@@ -10,6 +10,7 @@ website/public/generated/
 # Enclosure: native CAD source files are large/proprietary and not committed.
 # STEP/STL exports and renders under enclosure/ are still tracked.
 enclosure/cad/
+enclosure/*/cad/
 
 # KiCad autosave / version-history backups (not deliverables)
 **/*-backups/

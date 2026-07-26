@@ -9,7 +9,6 @@
     </picture>
 </p>
 
-<p align="center"><strong>Off-grid. On track.</strong></p>
 
 **LIA** is an open-source, low-power pet and asset tracker built on top of [Meshtastic](https://meshtastic.org/) and LoRa mesh networking. It's designed to be a compact, long-range, subscription-free tracking device that keeps working off-grid — no cell coverage, no monthly fee, no cloud dependency.
 
@@ -20,11 +19,13 @@
 ## Features
 
 - Long-range LoRa communication over the open Meshtastic protocol
-- GPS/GNSS location tracking
-- Deep-sleep, low-power firmware
+- GPS/GNSS location tracking, sent only on a private, PSK-protected channel — not visible to the wider public mesh
+- A physical mode switch: continuous tracking (LED on, position every 30s) or a low-power sleep cycle (wake roughly once a minute, get a fix, report it, sleep again)
+- A text-command interface over the mesh: query position/battery on demand, toggle charge/motion notifications, override the status LED — see [Meshtastic Configuration](https://jgaguado.github.io/LIA/docs/firmware/meshtastic-configuration/)
+- Deep-sleep, low-power firmware with real hardware wake sources (timer, mode-switch flip, charger plug-in)
 - Subscription-free — no cloud backend required
 - Fully open hardware: schematics, PCB layout, BOM, and enclosure CAD
-- Compact, collar-mountable, waterproof-by-design enclosure
+- Compact, collar-mountable, waterproof-by-design enclosure — in three variants, see below
 
 ## Hardware Stack
 
@@ -33,19 +34,19 @@
 - ESP32-S3-MINI-1 (MCU, Wi-Fi/BLE)
 - SX1262 LoRa transceiver
 - u-blox SAM-M10Q GNSS module
-- 18650 Li-ion battery with magnetic pogo charging
+- MAX17048 battery fuel gauge
+
+**Two board/battery revisions**
+
+- **V1** — 18650 Li-ion cell (3500 mAh) with magnetic pogo charging, plus an LSM6DSOXTR 6-axis IMU for motion detection.
+- **V2** — a 50×37×4 mm pouch cell (1000 mAh) instead, trading capacity for a much more compact enclosure; no IMU populated.
 
 **Antennas**
 
 - Internal FPC LoRa antenna
 - Ceramic GNSS patch antenna
 
-**Optional sensors**
-
-- Accelerometer for motion-triggered wake
-- Environmental sensors
-
-See [Hardware documentation](https://jgaguado.github.io/LIA/docs/hardware/pcb/) for full details.
+See [Hardware documentation](https://jgaguado.github.io/LIA/docs/hardware/pcb/) for full details, and [Enclosure](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for the three enclosure variants that pair with these boards.
 
 ## Software Stack
 
@@ -57,9 +58,9 @@ See [Hardware documentation](https://jgaguado.github.io/LIA/docs/hardware/pcb/) 
 ```
 LIA/
 ├── website/       Astro + Starlight documentation & marketing site
-├── firmware/       Meshtastic and custom firmware, flashing tools
+├── firmware/       Meshtastic-based firmware (board variants, services, drivers, build tooling)
 ├── hardware/       KiCad project, PCB renders, schematics, BOM, production files
-├── enclosure/       Enclosure CAD (gitignored native files), STEP/STL exports, renders
+├── enclosure/       Enclosure CAD (gitignored native files), STEP/STL exports, renders — V1R1/, V1R2/, V2R1/
 ├── mobile/         Companion mobile app (planned)
 ├── scripts/       Repo maintenance and tooling scripts
 ├── .github/       CI/CD workflows, issue & PR templates
@@ -83,7 +84,7 @@ npm run dev
 
 **Hardware:** open [`hardware/kicad/LIA.kicad_pro`](hardware/kicad/LIA.kicad_pro) in [KiCad](https://www.kicad.org/) 8+.
 
-**Enclosure:** STEP/STL exports are in [`enclosure/step/`](enclosure/step) and [`enclosure/stl/`](enclosure/stl) — no CAD license required to view or print them.
+**Enclosure:** three versions — [`enclosure/V1R1/`](enclosure/V1R1), [`enclosure/V1R2/`](enclosure/V1R2), [`enclosure/V2R1/`](enclosure/V2R1) — each with its own `step/`/`stl/` exports and `drawings/`; no CAD license required to view or print them. See [Enclosure docs](https://jgaguado.github.io/LIA/docs/hardware/enclosure/) for what differs between them.
 
 **Firmware:** see [`firmware/README.md`](firmware/README.md) and the [Getting Started guide](https://jgaguado.github.io/LIA/docs/getting-started/).
 
@@ -97,12 +98,14 @@ LIA is released under **[CC BY-NC-SA 4.0](LICENSE)** (Attribution-NonCommercial-
 
 ## Roadmap
 - [x] Draft project requirements and design goals
-- [x] Complete first hardware revision 
-- [ ] Complete first enclosure revision
-- [ ] Manufacture and assemble first batch of boards
-- [ ] Smoke-test and validate hardware
-- [ ] Release first firmware
-- [ ] Release initial documentation
+- [x] Complete first hardware revision (V1) and a second, more compact revision (V2)
+- [x] Complete first enclosure revisions — V1R1 (detachable), V1R2, and V2R1 (fixed-mount)
+- [x] Manufacture and assemble first batch of boards
+- [x] Smoke-test and validate hardware (radio, GPS, charging, battery gauge, IMU)
+- [x] Release first firmware — see [Development History](https://jgaguado.github.io/LIA/docs/development-history/) for the phase-by-phase log
+- [x] Release initial documentation
+- [ ] Field trial: real-world tracking validation over an extended period
+- [ ] Measured (not estimated) battery runtime numbers
 
 ## Disclaimer
 

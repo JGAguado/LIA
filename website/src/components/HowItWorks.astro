@@ -1,0 +1,83 @@
+---
+const steps = [
+  { title: 'Wake', description: 'The device wakes from deep sleep on a timer or motion trigger.' },
+  { title: 'Fix', description: 'The GNSS module acquires a position lock.' },
+  { title: 'Broadcast', description: 'Location is sent over LoRa using the Meshtastic protocol.' },
+  {
+    title: 'Relay',
+    description: 'Nearby mesh nodes relay the packet toward a gateway, node by node.',
+  },
+  {
+    title: 'Sleep',
+    description: 'The radio and GPS power down and the device returns to deep sleep.',
+  },
+];
+---
+
+<section class="lia-how" id="how-it-works">
+  <h2>How it works</h2>
+  <ol class="lia-how__steps">
+    {
+      steps.map((step, index) => (
+        <li>
+          <span class="lia-how__index">{String(index + 1).padStart(2, '0')}</span>
+          <h3>{step.title}</h3>
+          <p>{step.description}</p>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .lia-how {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  .lia-how h2 {
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    margin: 0 0 2.5rem;
+    color: var(--lia-fg);
+  }
+
+  .lia-how__steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+  }
+
+  .lia-how__steps li {
+    position: relative;
+    padding-top: 0.5rem;
+    border-top: 2px solid var(--color-accent-500);
+  }
+
+  .lia-how__index {
+    display: block;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-accent-600);
+    margin-bottom: 0.5rem;
+  }
+
+  .lia-how__steps h3 {
+    font-family: var(--font-heading);
+    margin: 0 0 0.35rem;
+    color: var(--lia-fg);
+  }
+
+  .lia-how__steps p {
+    margin: 0;
+    color: var(--lia-fg-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+</style>

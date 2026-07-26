@@ -1,0 +1,44 @@
+---
+title: PCB
+description: LIA's main board — layout, renders, and design files.
+---
+
+import Gallery from '../../../../components/Gallery.astro';
+import isometric1 from '../../../../../../hardware/pcb/renders/Isometric_1.png';
+import isometric2 from '../../../../../../hardware/pcb/renders/Isometric_2.png';
+import top from '../../../../../../hardware/pcb/renders/Top.png';
+import bottom from '../../../../../../hardware/pcb/renders/Bottom.png';
+import layout from '../../../../../../hardware/pcb/renders/Layout.png';
+
+LIA's main board is designed in [KiCad](https://www.kicad.org/) and built around an ESP32-S3-MINI-1 module, an SX1262 LoRa transceiver, and a u-blox SAM-M10Q GNSS module.
+
+<Gallery
+  id="pcb-renders"
+  images={[
+    { src: layout, alt: 'PCB component layout' },
+    { src: top, alt: 'PCB top copper layer' },
+    { src: bottom, alt: 'PCB bottom copper layer' },
+    { src: isometric1, alt: 'PCB isometric render, front' },
+    { src: isometric2, alt: 'PCB isometric render, angled' },
+  ]}
+/>
+
+## Core components
+
+| Function         | Part                          |
+| ---------------- | ----------------------------- |
+| MCU + Wi-Fi/BLE  | ESP32-S3-MINI-1-N8            |
+| LoRa transceiver | SX1262                        |
+| GNSS             | u-blox SAM-M10Q               |
+| Power            | 18650 Li-ion + USB-C charging |
+
+## Antennas
+
+- YFNF868F3AM FPC LoRa antenna (868MHz)
+- Ceramic GNSS patch antenna
+
+## Design files
+
+The full KiCad project lives under [`hardware/kicad/`](https://github.com/JGAguado/LIA/tree/main/hardware/kicad) in the repository, and a 3D model export is available at [`hardware/pcb/LIA_PCB.step`](https://github.com/JGAguado/LIA/tree/main/hardware/pcb). See [Downloads](/LIA/docs/downloads/) for direct links.
+
+See also: [Schematics](/LIA/docs/hardware/schematics/) and [BOM](/LIA/docs/hardware/bom/).

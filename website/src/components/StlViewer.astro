@@ -1,0 +1,153 @@
+---
+interface Props {
+  src: string;
+  label: string;
+  downloadHref?: string;
+  height?: string;
+  color?: string;
+}
+
+const { src, label, downloadHref = src, height = '24rem', color = '#2eb67d' } = Astro.props;
+const id = `stl-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<figure class="lia-stl" style={`--lia-stl-height: ${height};`}>
+  <div
+    class="lia-stl__canvas"
+    id={id}
+    data-src={src}
+    data-color={color}
+    role="img"
+    aria-label={`Interactive 3D preview of ${label}`}
+  >
+    <p class="lia-stl__loading">Loading 3D preview…</p>
+  </div>
+  <figcaption>
+    <span>{label}</span>
+    <a href={downloadHref} download>Download STL</a>
+  </figcaption>
+</figure>
+
+<script>
+  import * as THREE from 'three';
+  import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  function initViewer(container: HTMLElement) {
+    const src = container.dataset.src!;
+    const color = container.dataset.color ?? '#2eb67d';
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.replaceChildren(renderer.domElement);
+
+    const resize = () => {
+      const { clientWidth, clientHeight } = container;
+      renderer.setSize(clientWidth, clientHeight);
+      camera.aspect = clientWidth / clientHeight;
+      camera.updateProjectionMatrix();
+    };
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2.2));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(1, 1, 1);
+    scene.add(keyLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    new STLLoader().load(
+      src,
+      (geometry) => {
+        geometry.computeVertexNormals();
+        geometry.center();
+
+        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.1 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        scene.add(mesh);
+
+        geometry.computeBoundingSphere();
+        const radius = geometry.boundingSphere?.radius ?? 50;
+        camera.position.set(radius * 1.8, radius * 1.4, radius * 1.8);
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        resize();
+      },
+      undefined,
+      () => {
+        container.innerHTML = '<p class="lia-stl__error">Couldn\'t load the 3D preview.</p>';
+      },
+    );
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    (function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('.lia-stl__canvas')
+    .forEach((container) => initViewer(container));
+</script>
+
+<style>
+  .lia-stl {
+    margin: 0;
+  }
+
+  .lia-stl__canvas {
+    position: relative;
+    width: 100%;
+    height: var(--lia-stl-height);
+    border-radius: 0.75rem;
+    background: var(--color-gray-100);
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .lia-stl__canvas :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .lia-stl__loading,
+  .lia-stl__error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: var(--color-gray-500);
+    font-size: 0.875rem;
+  }
+
+  figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-gray-600);
+  }
+
+  figcaption a {
+    color: var(--color-accent-600);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  figcaption a:hover {
+    text-decoration: underline;
+  }
+</style>

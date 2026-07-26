@@ -1,0 +1,11 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false, // line length — prose isn't hard-wrapped
+    "MD033": false, // inline HTML — needed for components (Tabs, asides, model-viewer, etc.)
+    "MD041": false, // first line doesn't have to be a top-level heading (frontmatter comes first)
+    "MD025": false, // single H1 — Starlight renders the frontmatter title as the H1
+    "MD060": false, // table pipe alignment is cosmetic only, doesn't affect rendering
+  },
+  "globs": ["src/content/docs/**/*.md", "src/content/docs/**/*.mdx"],
+}

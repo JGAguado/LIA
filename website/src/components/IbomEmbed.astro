@@ -1,0 +1,49 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  height?: string;
+}
+
+const { src, title, height = '900px' } = Astro.props;
+---
+
+<div class="lia-ibom">
+  <div class="lia-ibom__toolbar">
+    <a href={src} target="_blank" rel="noopener">Open in new tab ↗</a>
+  </div>
+  <iframe src={src} title={title} style={`height: ${height};`} loading="lazy"></iframe>
+</div>
+
+<style>
+  .lia-ibom {
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .lia-ibom__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-gray-100);
+    border-bottom: 1px solid var(--color-gray-200);
+    font-size: 0.875rem;
+  }
+
+  .lia-ibom__toolbar a {
+    color: var(--color-accent-600);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .lia-ibom__toolbar a:hover {
+    text-decoration: underline;
+  }
+
+  .lia-ibom iframe {
+    display: block;
+    width: 100%;
+    border: none;
+  }
+</style>

@@ -1,0 +1,117 @@
+---
+const base = import.meta.env.BASE_URL;
+
+const cards = [
+  {
+    title: 'Getting Started',
+    description: 'Set up your first LIA device.',
+    href: '/docs/getting-started/',
+  },
+  {
+    title: 'Hardware',
+    description: 'PCB, schematics, and bill of materials.',
+    href: '/docs/hardware/pcb/',
+  },
+  {
+    title: 'Firmware',
+    description: 'Meshtastic configuration and power management.',
+    href: '/docs/firmware/meshtastic-configuration/',
+  },
+  {
+    title: 'Assembly',
+    description: 'Build and seal the tracker enclosure.',
+    href: '/docs/hardware/assembly/',
+  },
+  {
+    title: 'Configuration',
+    description: 'Radio, GPS, and battery configuration.',
+    href: '/docs/firmware/lora/',
+  },
+  {
+    title: 'Meshtastic',
+    description: 'How LIA fits into the Meshtastic mesh.',
+    href: '/docs/firmware/meshtastic-configuration/',
+  },
+  {
+    title: 'CAD',
+    description: 'Enclosure models, renders, and 3D files.',
+    href: '/docs/hardware/enclosure/',
+  },
+  {
+    title: 'Downloads',
+    description: 'STEP, STL, and manufacturing files.',
+    href: '/docs/downloads/',
+  },
+  { title: 'FAQ', description: 'Answers to common questions.', href: '/docs/faq/' },
+];
+---
+
+<section class="lia-docs-grid" id="documentation">
+  <h2>Documentation</h2>
+  <ul class="lia-docs-grid__grid">
+    {
+      cards.map((card) => (
+        <li>
+          <a href={`${base}${card.href}`}>
+            <h3>{card.title}</h3>
+            <p>{card.description}</p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .lia-docs-grid {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem;
+  }
+
+  .lia-docs-grid h2 {
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    margin: 0 0 2.5rem;
+    color: var(--lia-fg);
+  }
+
+  .lia-docs-grid__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lia-docs-grid__grid a {
+    display: block;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--lia-border);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .lia-docs-grid__grid a:hover {
+    border-color: var(--color-accent-500);
+    transform: translateY(-2px);
+  }
+
+  .lia-docs-grid__grid h3 {
+    font-family: var(--font-heading);
+    margin: 0 0 0.4rem;
+    color: var(--lia-fg);
+  }
+
+  .lia-docs-grid__grid p {
+    margin: 0;
+    color: var(--lia-fg-muted);
+    font-size: 0.9rem;
+  }
+</style>

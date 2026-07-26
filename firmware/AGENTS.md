@@ -62,20 +62,33 @@ Meshtastic Core
 → Board Definition
 → LiaBoard (hardware abstraction)
 → Drivers
-→ TrackerService
+→ Services (TrackerService, ChargeStatusService, CommandService)
 
 LiaBoard owns:
-- enablePeripherals()
-- disablePeripherals()
+- enablePeripherals() / disablePeripherals()
 - setRedLed()
-- isCharging()
-- isChargeComplete()
-- isTrackerMode()
+- isCharging() / isChargeComplete()
+- isBmsHigh()
+- armDeepSleepHook()
+
+Drivers own:
+- ImuMotionDriver: talks to the LSM6DSOXTR directly (lia_v1 only) -- see
+  `drivers/README.md` for why this bypasses stock Meshtastic's own
+  accelerometer support.
 
 TrackerService owns:
-- destination selection
-- tracker state machine
+- destination selection (MeshTargets.h, shared with the other services)
+- BMS-driven tracker/beacon state machine
 - GPS transmission scheduling
+- the manual RED LED override (LED ON/OFF, via CommandService)
+
+ChargeStatusService owns:
+- "Charging"/"Device charged" notifications, each independently toggleable
+  (CHG ON/OFF, STB ON/OFF, via CommandService)
+
+CommandService (lia_v1 only) owns:
+- the text-command interface described in the "Target Node" section below
+  and in `services/README.md`
 
 ## Development Rules
 

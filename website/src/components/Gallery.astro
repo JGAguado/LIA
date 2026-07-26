@@ -1,0 +1,195 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface GalleryImage {
+  src: ImageMetadata;
+  alt: string;
+  caption?: string;
+}
+
+interface Props {
+  images: GalleryImage[];
+  id?: string;
+}
+
+const { images, id = 'gallery' } = Astro.props;
+---
+
+<div class="lia-gallery" data-gallery={id}>
+  <ul class="lia-gallery__grid">
+    {
+      images.map((image, index) => (
+        <li>
+          <button
+            type="button"
+            class="lia-gallery__thumb"
+            data-index={index}
+            aria-label={`Open image: ${image.alt}`}
+          >
+            <Image
+              src={image.src}
+              alt={image.alt}
+              widths={[300, 600]}
+              sizes="300px"
+              loading="lazy"
+            />
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+
+  <dialog class="lia-gallery__dialog" aria-label="Image viewer">
+    <button type="button" class="lia-gallery__close" aria-label="Close">✕</button>
+    <button type="button" class="lia-gallery__prev" aria-label="Previous image">‹</button>
+    <figure>
+      <img class="lia-gallery__full" alt="" />
+      <figcaption class="lia-gallery__caption"></figcaption>
+    </figure>
+    <button type="button" class="lia-gallery__next" aria-label="Next image">›</button>
+  </dialog>
+</div>
+
+<script>
+  const galleries = document.querySelectorAll<HTMLElement>('.lia-gallery');
+
+  galleries.forEach((gallery) => {
+    const dialog = gallery.querySelector('dialog')!;
+    const fullImg = dialog.querySelector<HTMLImageElement>('.lia-gallery__full')!;
+    const caption = dialog.querySelector<HTMLElement>('.lia-gallery__caption')!;
+    const thumbs = Array.from(gallery.querySelectorAll<HTMLButtonElement>('.lia-gallery__thumb'));
+    let current = 0;
+
+    const show = (index: number) => {
+      current = (index + thumbs.length) % thumbs.length;
+      const thumbImg = thumbs[current].querySelector('img')!;
+      fullImg.src = thumbImg.src.split(' ')[0].replace(/,$/, '');
+      fullImg.srcset = thumbImg.srcset ?? '';
+      fullImg.alt = thumbImg.alt;
+      caption.textContent = thumbImg.alt;
+    };
+
+    thumbs.forEach((thumb, index) => {
+      thumb.addEventListener('click', () => {
+        show(index);
+        dialog.showModal();
+      });
+    });
+
+    dialog.querySelector('.lia-gallery__close')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('.lia-gallery__prev')?.addEventListener('click', () => show(current - 1));
+    dialog.querySelector('.lia-gallery__next')?.addEventListener('click', () => show(current + 1));
+
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') show(current - 1);
+      if (event.key === 'ArrowRight') show(current + 1);
+    });
+  });
+</script>
+
+<style>
+  .lia-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lia-gallery__thumb {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    border-radius: 0.6rem;
+    overflow: hidden;
+    cursor: zoom-in;
+    background: var(--color-gray-100);
+  }
+
+  .lia-gallery__thumb img {
+    display: block;
+    width: 100%;
+    height: 8rem;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+  }
+
+  .lia-gallery__thumb:hover img,
+  .lia-gallery__thumb:focus-visible img {
+    transform: scale(1.05);
+  }
+
+  .lia-gallery__dialog {
+    position: fixed;
+    inset: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+    margin: auto;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: var(--color-gray-950);
+    color: white;
+  }
+
+  .lia-gallery__dialog::backdrop {
+    background: rgb(15 23 32 / 85%);
+  }
+
+  .lia-gallery__dialog figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lia-gallery__full {
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 0.5rem;
+  }
+
+  .lia-gallery__caption {
+    font-size: 0.875rem;
+    color: var(--color-gray-300);
+  }
+
+  .lia-gallery__close,
+  .lia-gallery__prev,
+  .lia-gallery__next {
+    position: absolute;
+    background: rgb(255 255 255 / 10%);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+
+  .lia-gallery__close {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .lia-gallery__prev {
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .lia-gallery__next {
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+</style>

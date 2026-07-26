@@ -1,0 +1,69 @@
+---
+// Click-to-load facade: no YouTube script, cookies, or network request
+// until the visitor explicitly chooses to play the video.
+interface Props {
+  id: string;
+  title: string;
+}
+
+const { id, title } = Astro.props;
+const thumbnail = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+---
+
+<div class="lia-yt-facade" data-video-id={id} data-title={title}>
+  <img src={thumbnail} alt="" loading="lazy" />
+  <button type="button" aria-label={`Play video: ${title}`}>
+    <svg viewBox="0 0 68 48" width="68" height="48" aria-hidden="true">
+      <path
+        d="M66.5 7.7a8.4 8.4 0 0 0-5.9-6C55.1 0 34 0 34 0S12.9 0 7.4 1.7a8.4 8.4 0 0 0-5.9 6A87 87 0 0 0 0 24a87 87 0 0 0 1.5 16.3 8.4 8.4 0 0 0 5.9 6C12.9 48 34 48 34 48s21.1 0 26.6-1.7a8.4 8.4 0 0 0 5.9-6A87 87 0 0 0 68 24a87 87 0 0 0-1.5-16.3z"
+        fill="#f00"></path>
+      <path d="M45 24 27 14v20z" fill="#fff"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.lia-yt-facade').forEach((facade) => {
+    facade.querySelector('button')?.addEventListener('click', () => {
+      const id = facade.dataset.videoId;
+      const title = facade.dataset.title ?? 'YouTube video';
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+      iframe.title = title;
+      iframe.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      facade.replaceWith(iframe);
+    });
+  });
+</script>
+
+<style>
+  .lia-yt-facade {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .lia-yt-facade img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .lia-yt-facade button {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 68px;
+    height: 48px;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+  iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 0.75rem;
+  }
+</style>

@@ -1,0 +1,18 @@
+---
+title: BOM
+description: Bill of materials for the LIA main board.
+---
+
+import IbomEmbed from '../../../../components/IbomEmbed.astro';
+
+The interactive BOM below is generated directly from the KiCad project with [InteractiveHtmlBom](https://github.com/openscopeproject/InteractiveHtmlBom) — it stays in sync automatically whenever `hardware/pcb/bom/ibom.html` is regenerated from KiCad, no manual copy step needed. Click a row to highlight the matching part on the board.
+
+<IbomEmbed src="/LIA/generated/bom/ibom.html" title="LIA interactive BOM" />
+
+## Related files
+
+- [`hardware/production/bom.csv`](https://github.com/JGAguado/LIA/blob/main/hardware/production/bom.csv) — full bill of materials
+- [`hardware/production/positions.csv`](https://github.com/JGAguado/LIA/blob/main/hardware/production/positions.csv) — pick-and-place positions
+- [`hardware/production/designators.csv`](https://github.com/JGAguado/LIA/blob/main/hardware/production/designators.csv) — designator-to-footprint map
+
+See also: [PCB](/LIA/docs/hardware/pcb/) and [Manufacturing](/LIA/docs/manufacturing/).

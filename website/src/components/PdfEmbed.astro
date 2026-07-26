@@ -1,0 +1,30 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  height?: string;
+}
+
+const { src, title, height = '640px' } = Astro.props;
+---
+
+<div class="lia-pdf">
+  <iframe src={src} title={title} style={`height: ${height};`} loading="lazy"></iframe>
+  <p class="lia-pdf__fallback">
+    Can't see the preview? <a href={src} download>Download the PDF</a> instead.
+  </p>
+</div>
+
+<style>
+  .lia-pdf iframe {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0.5rem;
+  }
+  .lia-pdf__fallback {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+  }
+</style>
