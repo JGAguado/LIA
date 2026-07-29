@@ -1,0 +1,105 @@
+---
+// Shared bench-photo gallery -- used on both the marketing homepage and
+// Development History, so the image list/captions only live in one place.
+import Gallery from './Gallery.astro';
+
+import photo307 from '../assets/photos/6003601369522179307.jpg';
+import photo308 from '../assets/photos/6003601369522179308.jpg';
+import photo309 from '../assets/photos/6003601369522179309.jpg';
+import photo310 from '../assets/photos/6003601369522179310.jpg';
+import photo311 from '../assets/photos/6003601369522179311.jpg';
+import photo312 from '../assets/photos/6003601369522179312.jpg';
+import photo313 from '../assets/photos/6003601369522179313.jpg';
+import photo314 from '../assets/photos/6003601369522179314.jpg';
+import photo316 from '../assets/photos/6003601369522179316.jpg';
+import photo317 from '../assets/photos/6003601369522179317.jpg';
+import photo318 from '../assets/photos/6003601369522179318.jpg';
+import photo320 from '../assets/photos/6003601369522179320.jpg';
+import photo321 from '../assets/photos/6003601369522179321.jpg';
+import photo322 from '../assets/photos/6003601369522179322.jpg';
+import photo323 from '../assets/photos/6003601369522179323.jpg';
+import photo326 from '../assets/photos/6003601369522179326.jpg';
+import photo327 from '../assets/photos/6003601369522179327.jpg';
+import photo329 from '../assets/photos/6003601369522179329.jpg';
+
+interface Props {
+  id?: string;
+  heading?: string;
+  /** Wraps in a centered, padded section matching the other homepage
+   * blocks (Hero/FeatureGrid/DocsCardGrid). Set false to blend into normal
+   * document flow instead, e.g. when embedding under an existing markdown
+   * heading on a docs page. */
+  standalone?: boolean;
+}
+
+const { id = 'build-photos', heading, standalone = false } = Astro.props;
+
+const images = [
+  { src: photo322, alt: 'Exploded view of the board, enclosure shells, and hardware laid out' },
+  {
+    src: photo308,
+    alt: "Open LIA board next to a 3D-printed enclosure shell, showing the board's test points and GNSS module",
+  },
+  {
+    src: photo309,
+    alt: 'Open LIA board with the mode switch, ESP32-S3 module, and GNSS module visible',
+  },
+  {
+    src: photo310,
+    alt: 'Assembled and open LIA boards side by side with the enclosure shell',
+  },
+  {
+    src: photo311,
+    alt: 'Two enclosures compared side-on, showing the magnetic pogo charging contacts',
+  },
+  { src: photo313, alt: 'Two enclosure prototypes compared side by side, antenna end' },
+  { src: photo317, alt: 'Two enclosures viewed from the antenna end, the oval LED window unlit' },
+  { src: photo320, alt: 'Two bone-shaped enclosure shells compared side by side' },
+  { src: photo323, alt: 'Two enclosure prototypes with antenna, top-down comparison' },
+  { src: photo326, alt: 'Two enclosures viewed from above, comparing antenna mount styles' },
+  {
+    src: photo318,
+    alt: 'Detachable collar clip next to the assembled enclosure, status LED lit red',
+  },
+  {
+    src: photo327,
+    alt: 'Detachable collar clip and assembled enclosure, status LED glowing red, close-up',
+  },
+  { src: photo314, alt: 'Two enclosures viewed head-on, the oval LED window lit red' },
+  { src: photo316, alt: 'Two enclosure prototypes at an angle, comparing antenna mounting' },
+  { src: photo321, alt: 'Two enclosures with the status LED lit red, angled comparison' },
+  { src: photo307, alt: 'Two assembled enclosures glowing red in a dark room' },
+  { src: photo312, alt: 'Two closed enclosures glowing red in the dark' },
+  { src: photo329, alt: 'Two enclosures glowing red in the dark, angled comparison' },
+];
+---
+
+{
+  standalone ? (
+    <section class="lia-build-gallery" id={id}>
+      {heading && <h2>{heading}</h2>}
+      <Gallery id={id} images={images} />
+    </section>
+  ) : (
+    <>
+      {heading && <h2>{heading}</h2>}
+      <Gallery id={id} images={images} />
+    </>
+  )
+}
+
+<style>
+  .lia-build-gallery {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  .lia-build-gallery h2 {
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    margin: 0 0 2.5rem;
+    color: var(--lia-fg);
+  }
+</style>
