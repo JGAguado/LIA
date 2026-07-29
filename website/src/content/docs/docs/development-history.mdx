@@ -107,11 +107,6 @@ The command syntax itself iterated a couple of times in response to how people a
 
 The private-channel design worked, but it asked for something people kept getting wrong in practice: a specifically-named channel (`Test`) had to exist and be shared out-of-band before anything LIA-specific would do anything at all, and getting that wrong meant messages silently failing closed with no obvious signal why. Given that direct messages were already being special-cased to work around PKI encryption (see above), the channel lookup was doing less and less real work — a DM to a specific node already requires knowing/pairing with that node, and the official app's PKI encryption to that node's identity key isn't a weaker bar than possessing a channel's PSK. The channel concept (and its supporting `ChannelLookup` lookup-by-name helper) was removed entirely in favor of addressing everything — position broadcasts, charge-status messages, and all `CommandService` traffic — as a direct message to a single predefined target node (`MeshTargets.h`'s `kLiaTargetNode`, derived from that node's MAC address).
 
-## Build gallery
-
-Photos from the bench along the way — prototype enclosures, antenna comparisons, and the status LED under test (also on the [homepage](/LIA/#build-gallery)):
-
-<BuildGallery id="build-photos" />
 
 ## What's next
 
