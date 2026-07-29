@@ -1,8 +1,15 @@
 ---
+import { Image } from 'astro:assets';
+import meshtasticPhoto from '../assets/photos/Features/Meshtastic.jpg';
+import beaconPhoto from '../assets/photos/Features/Beacon.jpg';
+import gpsPhoto from '../assets/photos/Features/GPS.jpg';
+import openSourcePhoto from '../assets/photos/Features/OpenSource.jpg';
+
 interface Feature {
   title: string;
   description: string;
   icon: string;
+  photo: ImageMetadata;
 }
 
 const features: Feature[] = [
@@ -11,24 +18,28 @@ const features: Feature[] = [
     description:
       'Built on the open Meshtastic firmware and LoRa mesh protocol — no proprietary radio stack.',
     icon: 'M4 12a8 8 0 0 1 16 0 M7 12a5 5 0 0 1 10 0 M10 12a2 2 0 0 1 4 0 M12 12v.01',
+    photo: meshtasticPhoto,
   },
   {
     title: 'Beacon Mode LED',
     description:
       'Flip the switch to Beacon mode and a bright status LED lights up solid, so you can spot your pet at a glance even in the dark.',
     icon: 'M9 18h6 M10 21h4 M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4 2.5 5s1.5 1.5 1.5 3h4c0-1.5.5-2 1.5-3s2.5-2.5 2.5-5a6 6 0 0 0-6-6Z',
+    photo: beaconPhoto,
   },
   {
     title: 'GPS Tracking',
     description:
       'A dedicated GNSS module reports precise location without relying on cell networks.',
     icon: 'M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z M12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+    photo: gpsPhoto,
   },
   {
     title: 'Open Source',
     description:
       'Full KiCad design, and documentation are all developed in the open under a shared license.',
     icon: 'M8 9l-3 3 3 3M16 9l3 3-3 3M13 6l-2 12',
+    photo: openSourcePhoto,
   },
 ];
 ---
@@ -38,27 +49,45 @@ const features: Feature[] = [
   <ul class="lia-features__grid">
     {
       features.map((feature) => (
-        <li class="lia-features__card">
-          <svg
-            viewBox="0 0 24 24"
-            width="28"
-            height="28"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d={feature.icon} />
-          </svg>
-          <h3>{feature.title}</h3>
-          <p>{feature.description}</p>
+        <li class="lia-features__card" tabindex="0">
+          <div class="lia-features__flip">
+            <div class="lia-features__face lia-features__face--front">
+              <svg
+                viewBox="0 0 24 24"
+                width="28"
+                height="28"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d={feature.icon} />
+              </svg>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </div>
+            <div class="lia-features__face lia-features__face--back">
+              <Image src={feature.photo} alt={feature.title} widths={[300, 600]} sizes="300px" />
+            </div>
+          </div>
         </li>
       ))
     }
   </ul>
 </section>
+
+<script>
+  // Touch devices don't have a real :hover -- toggle a class on tap instead,
+  // so the flip still works there (desktop keeps working via the CSS :hover
+  // below, untouched by this).
+  document.querySelectorAll<HTMLElement>('.lia-features__card').forEach((card) => {
+    card.addEventListener('click', () => {
+      card.classList.toggle('lia-features__card--flipped');
+    });
+  });
+</script>
 
 <style>
   .lia-features {
@@ -85,24 +114,60 @@ const features: Feature[] = [
   }
 
   .lia-features__card {
-    padding: 1.75rem;
+    perspective: 1200px;
+    cursor: pointer;
+  }
+
+  .lia-features__flip {
+    position: relative;
+    height: 100%;
+    min-height: 14rem;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+
+  .lia-features__card:hover .lia-features__flip,
+  .lia-features__card:focus-visible .lia-features__flip,
+  .lia-features__card--flipped .lia-features__flip {
+    transform: rotateY(180deg);
+  }
+
+  .lia-features__face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
     border-radius: 1rem;
     background: var(--lia-surface);
     color: var(--lia-fg);
   }
 
-  .lia-features__card svg {
+  .lia-features__face--front {
+    padding: 1.75rem;
+  }
+
+  .lia-features__face--back {
+    transform: rotateY(180deg);
+    overflow: hidden;
+  }
+
+  .lia-features__face--back :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lia-features__face svg {
     color: var(--color-accent-600);
     margin-bottom: 0.75rem;
   }
 
-  .lia-features__card h3 {
+  .lia-features__face h3 {
     font-family: var(--font-heading);
     font-size: 1.1rem;
     margin: 0 0 0.5rem;
   }
 
-  .lia-features__card p {
+  .lia-features__face p {
     margin: 0;
     color: var(--lia-fg-muted);
     font-size: 0.95rem;

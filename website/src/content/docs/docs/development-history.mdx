@@ -3,7 +3,33 @@ title: Development History
 description: A phase-by-phase log of how LIA's firmware got built, including the bugs found along the way.
 ---
 
-This is a running, chronological log of LIA's firmware development — written like a blog rather than a spec, because a lot of what's interesting here is *what went wrong and why*, not just what shipped. The formal phase roadmap this follows lives in [`firmware/AGENTS.md`](https://github.com/JGAguado/LIA/blob/main/firmware/AGENTS.md); the day-to-day validation notes behind each entry live in [`firmware/docs/phase-status.md`](https://github.com/JGAguado/LIA/blob/main/firmware/docs/phase-status.md).
+import Gallery from '../../../components/Gallery.astro';
+
+import iicFix1 from '../../../assets/photos/IIC fix/1.jpg';
+import iicFix2 from '../../../assets/photos/IIC fix/2.jpg';
+import iicFix3 from '../../../assets/photos/IIC fix/3.jpg';
+import iicFix4 from '../../../assets/photos/IIC fix/4.jpg';
+
+import photo307 from '../../../assets/photos/6003601369522179307.jpg';
+import photo308 from '../../../assets/photos/6003601369522179308.jpg';
+import photo309 from '../../../assets/photos/6003601369522179309.jpg';
+import photo310 from '../../../assets/photos/6003601369522179310.jpg';
+import photo311 from '../../../assets/photos/6003601369522179311.jpg';
+import photo312 from '../../../assets/photos/6003601369522179312.jpg';
+import photo313 from '../../../assets/photos/6003601369522179313.jpg';
+import photo314 from '../../../assets/photos/6003601369522179314.jpg';
+import photo316 from '../../../assets/photos/6003601369522179316.jpg';
+import photo317 from '../../../assets/photos/6003601369522179317.jpg';
+import photo318 from '../../../assets/photos/6003601369522179318.jpg';
+import photo320 from '../../../assets/photos/6003601369522179320.jpg';
+import photo321 from '../../../assets/photos/6003601369522179321.jpg';
+import photo322 from '../../../assets/photos/6003601369522179322.jpg';
+import photo323 from '../../../assets/photos/6003601369522179323.jpg';
+import photo326 from '../../../assets/photos/6003601369522179326.jpg';
+import photo327 from '../../../assets/photos/6003601369522179327.jpg';
+import photo329 from '../../../assets/photos/6003601369522179329.jpg';
+
+This is a running, chronological log of LIA's firmware development — written like a blog rather than a spec, because a lot of what's interesting here is _what went wrong and why_, not just what shipped. The formal phase roadmap this follows lives in [`firmware/AGENTS.md`](https://github.com/JGAguado/LIA/blob/main/firmware/AGENTS.md); the day-to-day validation notes behind each entry live in [`firmware/docs/phase-status.md`](https://github.com/JGAguado/LIA/blob/main/firmware/docs/phase-status.md).
 
 ## Phase 0-1 — Board bring-up and peripheral power
 
@@ -14,7 +40,7 @@ The first firmware milestone was the boring-but-essential one: a PlatformIO proj
 Turning the board into an actual Meshtastic node — SPI to the SX1262, a periodic "LIA Radio Test" broadcast — hit two genuine firmware bugs on the very first flash, both root-caused with `addr2line` against the built ELF rather than guessing from log output alone:
 
 1. A null-pointer dereference: the test module's periodic callback read a global (`airTime`) that Meshtastic's own `main.cpp` hadn't constructed yet at the point our hook ran.
-2. A more subtle one: a single `LOG_INFO()` call placed too early in boot (before the console/logging subsystem itself was initialized) crashed inside Meshtastic's own logging code. The fix was just moving that log line later — but finding *why* a seemingly-harmless print statement crashed the board took real investigation.
+2. A more subtle one: a single `LOG_INFO()` call placed too early in boot (before the console/logging subsystem itself was initialized) crashed inside Meshtastic's own logging code. The fix was just moving that log line later — but finding _why_ a seemingly-harmless print statement crashed the board took real investigation.
 
 Once fixed, the destination node received "LIA Radio Test" for real, confirmed independently from the receiving side via the official Meshtastic app.
 
@@ -26,11 +52,11 @@ The ad-hoc test sender got formalized into `TrackerService`, then upgraded to se
 
 This is where the physical mode switch (`BMS`) got wired up: switch HIGH means continuous tracking (LED on, broadcast every 30 seconds, never sleep); switch LOW means a low-power cycle (wake roughly once a minute, get a fix, send it, sleep again).
 
-Getting the sleep half of this working on real hardware surfaced a genuine crash: deep sleep uses an observer pattern where multiple parts of the firmware register interest in "we're about to sleep, do your cleanup." LIA's own power-gating hook was registering *too early* — before the radio and GPS drivers had registered their own graceful-shutdown hooks — so peripheral power was being cut before those drivers could tell their chips to standby cleanly. The radio's own internal assertion caught the resulting SPI failure. The fix was purely about *when* to register the hook, not what it does; confirmed across two full real sleep/wake cycles afterward.
+Getting the sleep half of this working on real hardware surfaced a genuine crash: deep sleep uses an observer pattern where multiple parts of the firmware register interest in "we're about to sleep, do your cleanup." LIA's own power-gating hook was registering _too early_ — before the radio and GPS drivers had registered their own graceful-shutdown hooks — so peripheral power was being cut before those drivers could tell their chips to standby cleanly. The radio's own internal assertion caught the resulting SPI failure. The fix was purely about _when_ to register the hook, not what it does; confirmed across two full real sleep/wake cycles afterward.
 
 ## Standalone GPS test, and a private channel for position
 
-Once the tracker was sending real positions, the next question was privacy: Meshtastic encrypts per-channel rather than per-recipient, and position handling is promiscuous by design (any node that can decrypt a packet updates its own map from it, regardless of who it was addressed to). Sending on the default public channel meant *any* node on the mesh could see this device's location. The fix was to send only on a private channel — named `Test`, looked up dynamically by name rather than a hardcoded index — so only people who'd been given that channel's key could see it. This same channel became the backbone for everything LIA-specific added afterward.
+Once the tracker was sending real positions, the next question was privacy: Meshtastic encrypts per-channel rather than per-recipient, and position handling is promiscuous by design (any node that can decrypt a packet updates its own map from it, regardless of who it was addressed to). Sending on the default public channel meant _any_ node on the mesh could see this device's location. The fix was to send only on a private channel — named `Test`, looked up dynamically by name rather than a hardcoded index — so only people who'd been given that channel's key could see it. This same channel became the backbone for everything LIA-specific added afterward.
 
 Around the same time, a small standalone PlatformIO project (`firmware/tools/gps_test/`) — no Meshtastic, just TinyGPSPlus and a serial print every 10 seconds — was built to get an outdoor cold-fix confirmation independent of the rest of the firmware's complexity: a real fix in about 36 seconds, 10 satellites.
 
@@ -38,7 +64,7 @@ Around the same time, a small standalone PlatformIO project (`firmware/tools/gps
 
 The original plan for charge status was a breathing/solid/off LED pattern. That got superseded by a more useful design: text messages (`"Charging"`, `"Device charged"`) sent to the private channel instead, since the LED was already spoken for by the BMS indicator.
 
-The `STBY` pin's polarity (which level means "charge complete") went through a real correction here. An initial assumption had it backwards; a live hardware test happened to *look* like it passed anyway, which is exactly the kind of false confidence a single test can give you. It was the actual TP4056 charge-controller wiring — an external pull-up holds `STBY` high while charging, an internal switch pulls it low on completion — that settled it for good, once that detail was worked out precisely.
+The `STBY` pin's polarity (which level means "charge complete") went through a real correction here. An initial assumption had it backwards; a live hardware test happened to _look_ like it passed anyway, which is exactly the kind of false confidence a single test can give you. It was the actual TP4056 charge-controller wiring — an external pull-up holds `STBY` high while charging, an internal switch pulls it low on completion — that settled it for good, once that detail was worked out precisely.
 
 ## Phase 8 — Waking early instead of waiting
 
@@ -58,6 +84,34 @@ A second physical board arrived with its accelerometer IC (an LSM6DSOXTR, sharin
 
 Later, the original board got a solder rework crossing `SDA`/`SCL` back correctly, fixing the wiring defect at its source rather than working around it. With that rework applied, `lia_v1` also got I2C enabled, and — since the LSM6DSOXTR/MAX17048 chips report a chip-ID collision that Meshtastic's own detection labels under a different sensor name (`QMI8658`) than what stock Meshtastic actually knows how to drive — a small dedicated driver (`ImuMotionDriver`) was added to talk to the real chip directly rather than relying on stock support that silently doesn't apply here. Both boards ended up physically identical shortly after, once the same rework was applied to the second board too — at which point `lia_v2` as a separate firmware variant no longer served any purpose and was retired; a single `lia_v1` build now covers both, and the hardware-only battery/enclosure distinction between them is tracked instead as V1.0/V1.1 (see [Battery](/LIA/docs/firmware/battery/) and [Enclosure](/LIA/docs/hardware/enclosure/)).
 
+The rework itself, step by step:
+
+<Gallery
+  id="iic-fix"
+  images={[
+    {
+      src: iicFix1,
+      alt: 'The board before rework, SDA/SCL soldermask still intact over the crossed traces',
+      caption: '1. Remove the soldermask to expose the two SDA/SCL routes.',
+    },
+    {
+      src: iicFix2,
+      alt: 'The two exposed copper routes, now cut',
+      caption: '2. Cut the routes.',
+    },
+    {
+      src: iicFix3,
+      alt: 'Two crossed jumper wires soldered in place of the cut routes',
+      caption: '3. Cross the routes with two wires.',
+    },
+    {
+      src: iicFix4,
+      alt: 'The rework covered in a blob of hot glue for protection',
+      caption: '4. Cover the fix with hot glue/resin to protect it.',
+    },
+  ]}
+/>
+
 ## CommandService — a text-command interface, and two bugs it surfaced
 
 With both boards now capable of reading the battery gauge and (on `lia_v1`) the IMU, a text-command interface (`GPS`, `BATTERY`, `IMU ON`/`OFF`, `CHG ON`/`OFF`, `STB ON`/`OFF`, `HELP`, later `LED ON`/`OFF`) replaced one-way notifications with something interactive. Building and testing it on real hardware surfaced two more real bugs:
@@ -70,6 +124,52 @@ The command syntax itself iterated a couple of times in response to how people a
 ## Dropping the private channel for direct addressing
 
 The private-channel design worked, but it asked for something people kept getting wrong in practice: a specifically-named channel (`Test`) had to exist and be shared out-of-band before anything LIA-specific would do anything at all, and getting that wrong meant messages silently failing closed with no obvious signal why. Given that direct messages were already being special-cased to work around PKI encryption (see above), the channel lookup was doing less and less real work — a DM to a specific node already requires knowing/pairing with that node, and the official app's PKI encryption to that node's identity key isn't a weaker bar than possessing a channel's PSK. The channel concept (and its supporting `ChannelLookup` lookup-by-name helper) was removed entirely in favor of addressing everything — position broadcasts, charge-status messages, and all `CommandService` traffic — as a direct message to a single predefined target node (`MeshTargets.h`'s `kLiaTargetNode`, derived from that node's MAC address).
+
+## Build gallery
+
+Photos from the bench along the way — prototype enclosures, antenna comparisons, and the status LED under test:
+
+<Gallery
+  id="build-photos"
+  images={[
+    { src: photo322, alt: 'Exploded view of the board, enclosure shells, and hardware laid out' },
+    {
+      src: photo308,
+      alt: "Open LIA board next to a 3D-printed enclosure shell, showing the board's test points and GNSS module",
+    },
+    {
+      src: photo309,
+      alt: 'Open LIA board with the mode switch, ESP32-S3 module, and GNSS module visible',
+    },
+    {
+      src: photo310,
+      alt: 'Assembled and open LIA boards side by side with the enclosure shell',
+    },
+    {
+      src: photo311,
+      alt: 'Two enclosures compared side-on, showing the magnetic pogo charging contacts',
+    },
+    { src: photo313, alt: 'Two enclosure prototypes compared side by side, antenna end' },
+    { src: photo317, alt: 'Two enclosures viewed from the antenna end, the oval LED window unlit' },
+    { src: photo320, alt: 'Two bone-shaped enclosure shells compared side by side' },
+    { src: photo323, alt: 'Two enclosure prototypes with antenna, top-down comparison' },
+    { src: photo326, alt: 'Two enclosures viewed from above, comparing antenna mount styles' },
+    {
+      src: photo318,
+      alt: 'Detachable collar clip next to the assembled enclosure, status LED lit red',
+    },
+    {
+      src: photo327,
+      alt: 'Detachable collar clip and assembled enclosure, status LED glowing red, close-up',
+    },
+    { src: photo314, alt: 'Two enclosures viewed head-on, the oval LED window lit red' },
+    { src: photo316, alt: 'Two enclosure prototypes at an angle, comparing antenna mounting' },
+    { src: photo321, alt: 'Two enclosures with the status LED lit red, angled comparison' },
+    { src: photo307, alt: 'Two assembled enclosures glowing red in a dark room' },
+    { src: photo312, alt: 'Two closed enclosures glowing red in the dark' },
+    { src: photo329, alt: 'Two enclosures glowing red in the dark, angled comparison' },
+  ]}
+/>
 
 ## What's next
 
