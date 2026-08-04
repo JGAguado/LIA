@@ -114,8 +114,8 @@ LIA is released under **[CC BY-NC-SA 4.0](LICENSE)** (Attribution-NonCommercial-
 - [x] Smoke-test and validate hardware (radio, GPS, charging, battery gauge, IMU)
 - [x] Release first firmware — see [Development History](https://jgaguado.github.io/LIA/docs/development-history/) for the phase-by-phase log
 - [x] Release initial documentation
-- [ ] Field trial: real-world tracking validation over an extended period
-- [ ] Measured (not estimated) battery runtime numbers
+- [x] Field trial: real-world tracking validation over an extended period
+- [x] Measured (not estimated) battery runtime numbers
 
 ## Disclaimer
 
